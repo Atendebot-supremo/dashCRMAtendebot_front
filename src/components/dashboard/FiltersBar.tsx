@@ -1,0 +1,152 @@
+import { useState } from 'react'
+import { Calendar } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { Card, CardContent } from '@/components/ui/card'
+// import { useUsers } from '@/lib/api/queries'
+// import { useChannels } from '@/lib/api/queries'
+import type { DashboardFilters } from '@/lib/api/helena-types'
+
+interface FiltersBarProps {
+  filters: DashboardFilters
+  onFiltersChange: (filters: DashboardFilters) => void
+}
+
+const FiltersBar = ({ filters, onFiltersChange }: FiltersBarProps) => {
+  // Desabilitado temporariamente - rotas não existem na API
+  const users: any[] = []
+  const channels: any[] = []
+  const usersLoading = false
+  const channelsLoading = false
+
+  const handleUserChange = (value: string) => {
+    onFiltersChange({ ...filters, userId: value === 'all' ? undefined : value })
+  }
+
+  const handleChannelChange = (value: string) => {
+    onFiltersChange({
+      ...filters,
+      channelId: value === 'all' ? undefined : value,
+    })
+  }
+
+  const handlePeriodChange = (period: 'today' | 'week' | 'month' | 'year') => {
+    const now = new Date()
+    let startDate: Date
+    let endDate: Date = now
+
+    switch (period) {
+      case 'today':
+        startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+        break
+      case 'week':
+        const day = now.getDay()
+        startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - day)
+        break
+      case 'month':
+        startDate = new Date(now.getFullYear(), now.getMonth(), 1)
+        break
+      case 'year':
+        startDate = new Date(now.getFullYear(), 0, 1)
+        break
+      default:
+        startDate = new Date(now.getFullYear(), now.getMonth(), 1)
+    }
+
+    onFiltersChange({
+      ...filters,
+      startDate: startDate.toISOString().split('T')[0],
+      endDate: endDate.toISOString().split('T')[0],
+    })
+  }
+
+  return (
+    <Card>
+      <CardContent className="pt-6">
+        <div className="flex flex-wrap items-center gap-4">
+          {/* Período */}
+          <div className="flex items-center gap-2">
+            <Calendar className="h-4 w-4 text-muted-foreground" />
+            <Select
+              onValueChange={handlePeriodChange}
+              defaultValue="month"
+            >
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Período" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="today">Hoje</SelectItem>
+                <SelectItem value="week">Esta Semana</SelectItem>
+                <SelectItem value="month">Este Mês</SelectItem>
+                <SelectItem value="year">Este Ano</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Usuário/Vendedor */}
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-muted-foreground">Vendedor:</span>
+            <Select
+              value={filters.userId || 'all'}
+              onValueChange={handleUserChange}
+              disabled={usersLoading}
+            >
+              <SelectTrigger className="w-[200px]">
+                <SelectValue placeholder="Todos os vendedores" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos os vendedores</SelectItem>
+                {users.map((user) => (
+                  <SelectItem key={user.id} value={user.id}>
+                    {user.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Canal */}
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-muted-foreground">Canal:</span>
+            <Select
+              value={filters.channelId || 'all'}
+              onValueChange={handleChannelChange}
+              disabled={channelsLoading}
+            >
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Todos os canais" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos os canais</SelectItem>
+                {channels.map((channel) => (
+                  <SelectItem key={channel.id} value={channel.id}>
+                    {channel.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Reset */}
+          <Button
+            variant="outline"
+            onClick={() => {
+              onFiltersChange({})
+            }}
+          >
+            Limpar Filtros
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+
+export default FiltersBar
+
