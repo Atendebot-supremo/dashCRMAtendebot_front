@@ -219,7 +219,7 @@ export const helenaClient = {
   //     '/chat/public/v1/channel'
   //   )
   // },
+  
 }
 
 export { HelenaAPIError }
-
