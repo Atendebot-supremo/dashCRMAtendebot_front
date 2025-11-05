@@ -108,29 +108,40 @@ const FunilView = ({ filters }: FunilViewProps) => {
       {/* Tabela de Métricas */}
       <Card>
         <Title>Métricas Detalhadas por Etapa</Title>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b">
-                <th className="text-left p-2">Etapa</th>
-                <th className="text-right p-2">Leads</th>
-                <th className="text-right p-2">Valor Total</th>
-                <th className="text-right p-2">Taxa de Conversão</th>
-                <th className="text-right p-2">Tempo Médio</th>
+        <div className="mt-6 overflow-x-auto">
+          <table className="w-full text-sm border-collapse">
+            <thead className="bg-gray-50">
+              <tr className="border-b-2 border-gray-200">
+                <th className="text-left p-3 font-semibold text-gray-700">Etapa</th>
+                <th className="text-right p-3 font-semibold text-gray-700">Leads</th>
+                <th className="text-right p-3 font-semibold text-gray-700">Valor Total</th>
+                <th className="text-right p-3 font-semibold text-gray-700">Taxa de Conversão</th>
+                <th className="text-right p-3 font-semibold text-gray-700">Tempo Médio</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="bg-white">
               {funnelMetrics.map((metric, index) => (
-                <tr key={index} className="border-b hover:bg-muted/50">
-                  <td className="p-2 font-medium">{metric.stage}</td>
-                  <td className="p-2 text-right">{metric.leads}</td>
-                  <td className="p-2 text-right">
+                <tr key={index} className="border-b border-gray-200 hover:bg-blue-50 transition-colors">
+                  <td className="p-3">
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded-full bg-blue-500"></div>
+                      <span className="font-medium text-gray-900">{metric.stage}</span>
+                    </div>
+                  </td>
+                  <td className="p-3 text-right">
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                      {metric.leads}
+                    </span>
+                  </td>
+                  <td className="p-3 text-right font-semibold text-gray-900">
                     {formatCurrency(metric.value)}
                   </td>
-                  <td className="p-2 text-right">
-                    {formatPercentage(metric.conversionRate)}
+                  <td className="p-3 text-right">
+                    <span className={`font-medium ${metric.conversionRate >= 50 ? 'text-green-600' : 'text-yellow-600'}`}>
+                      {formatPercentage(metric.conversionRate)}
+                    </span>
                   </td>
-                  <td className="p-2 text-right">
+                  <td className="p-3 text-right text-gray-600">
                     {metric.averageTime.toFixed(1)} dias
                   </td>
                 </tr>

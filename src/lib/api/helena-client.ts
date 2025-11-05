@@ -132,8 +132,11 @@ export const helenaClient = {
     return result
   },
 
-  async getPanelById(panelId: string): Promise<Panel> {
-    return fetchWithAuth<Panel>(`/crm/v1/panel/${panelId}`)
+  async getPanelById(panelId: string): Promise<any> {
+    console.log('📋 [HelenaAPI] Buscando painel completo...', panelId)
+    const result = await fetchWithAuth<any>(`/crm/v1/panel/${panelId}`)
+    console.log('📋 [HelenaAPI] Painel recebido:', result)
+    return result
   },
 
   // Cards - precisa de panelId obrigatório

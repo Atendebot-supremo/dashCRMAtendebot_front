@@ -1,33 +1,44 @@
 import type { Card } from '../api/helena-types'
 
+// Mapeamento dinâmico de stepId para nome
+// Será atualizado quando buscarmos informações do painel
+let stepIdToNameMap: Record<string, string> = {}
+
 /**
- * Mapeia stepId para nomes das etapas do funil baseado nos dados reais
- * Se stepTitle estiver disponível, usa ele, senão usa mapeamento fixo
+ * Atualiza o mapeamento de stepId para nome
+ */
+export const updateStepMapping = (steps: Array<{ id: string; title: string }>) => {
+  steps.forEach((step) => {
+    stepIdToNameMap[step.id] = step.title
+  })
+  console.log('📋 [StageMapping] Mapeamento de etapas atualizado:', stepIdToNameMap)
+}
+
+/**
+ * Mapeia stepId para nome da etapa baseado nos dados reais
+ */
+export const getStepName = (stepId: string): string => {
+  // Tentar buscar no mapeamento dinâmico
+  if (stepIdToNameMap[stepId]) {
+    return stepIdToNameMap[stepId]
+  }
+  
+  // Fallback: retornar um nome mais amigável baseado no ID
+  return `Etapa ${stepId.substring(0, 8)}...`
+}
+
+/**
+ * Mapeia stepId de um card para nome da etapa
+ * Prioridade: stepTitle do card > mapeamento dinâmico > ID encurtado
  */
 export const getStageName = (card: Card): string => {
-  // Se tem stepTitle, usa ele
+  // Se tem stepTitle no card, usa ele
   if (card.stepTitle) {
     return card.stepTitle
   }
   
-  // Mapeamento fixo das 6 etapas conhecidas (baseado na imagem do AtendeBot)
-  const stageMap: Record<string, string> = {
-    // IDs de exemplo - serão atualizados com dados reais
-    'em-atendimento': 'Em atendimento',
-    'atendimento-humano': 'Atendimento Humano',
-    'qualificado': 'Qualificado',
-    'orcamento-enviado': 'Orçamento Enviado',
-    'perdido': 'Perdido',
-    'venda-realizada': 'Venda realizada',
-  }
-  
-  // Tentar encontrar por stepId
-  if (card.stepId && stageMap[card.stepId]) {
-    return stageMap[card.stepId]
-  }
-  
-  // Se não encontrou, usar stepTitle ou stepId como fallback
-  return card.stepTitle || card.stepId || 'Sem etapa'
+  // Usar mapeamento dinâmico
+  return getStepName(card.stepId)
 }
 
 /**

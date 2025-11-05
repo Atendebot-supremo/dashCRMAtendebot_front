@@ -62,12 +62,14 @@ export const calculateResponseTime = (cards: Card[]): number => {
   return sum / responseTimes.length
 }
 
+import { getStepName } from './stage-mapping'
+
 export const calculateFunnelMetrics = (cards: Card[]): FunnelMetrics[] => {
   const stageMap = new Map<string, { cards: Card[]; totalValue: number }>()
 
   cards.forEach((card) => {
-    // Usar stepTitle se disponível, senão usar stepId ou 'Sem etapa'
-    const stage = card.stepTitle || card.stepId || card.stage || 'Sem etapa'
+    // Usar stepTitle se disponível, senão usar mapeamento de stepId
+    const stage = card.stepTitle || getStepName(card.stepId) || 'Sem etapa'
     const current = stageMap.get(stage) || { cards: [], totalValue: 0 }
     current.cards.push(card)
     // Usar monetaryAmount se disponível, senão usar value
