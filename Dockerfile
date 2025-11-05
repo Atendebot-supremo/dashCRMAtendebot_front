@@ -13,7 +13,15 @@ RUN npm ci
 # Copiar código fonte
 COPY . .
 
-# Build da aplicação Vite
+# Argumentos de build para variáveis de ambiente
+ARG VITE_HELENA_API_URL
+ARG VITE_HELENA_API_TOKEN
+
+# Definir variáveis de ambiente para o build
+ENV VITE_HELENA_API_URL=$VITE_HELENA_API_URL
+ENV VITE_HELENA_API_TOKEN=$VITE_HELENA_API_TOKEN
+
+# Build da aplicação Vite (variáveis são "baked in" no código)
 RUN npm run build
 
 # Production stage

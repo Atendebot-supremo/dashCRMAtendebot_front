@@ -9,7 +9,9 @@
 ✅ **railway.json** - Configuração Railway  
 ✅ **.dockerignore** - Otimização de build  
 
-### Variáveis de Ambiente Necessárias
+### ⚠️ IMPORTANTE: Variáveis de Ambiente
+
+**Vite requer variáveis no BUILD TIME, não no runtime!**
 
 Configure na Railway antes do deploy:
 
@@ -18,6 +20,11 @@ VITE_HELENA_API_URL=https://api.flw.chat
 VITE_HELENA_API_TOKEN=pn_mh3AGdH9Exo8PsLsEQjRvg80IB66FEOieyPJlKaCxk
 ```
 
+**⚠️ ATENÇÃO:**
+1. Configure as variáveis ANTES de fazer o deploy
+2. Se já fez deploy, reconfigure e force um novo build
+3. As variáveis são "baked in" no código durante o build
+
 ### Como Fazer Deploy
 
 1. **Conectar Repositório na Railway**
@@ -25,15 +32,25 @@ VITE_HELENA_API_TOKEN=pn_mh3AGdH9Exo8PsLsEQjRvg80IB66FEOieyPJlKaCxk
    - New Project → Deploy from GitHub
    - Selecione o repositório
 
-2. **Configurar Variáveis**
+2. **⚠️ IMPORTANTE: Configurar Variáveis PRIMEIRO**
    - Na aba "Variables", adicione as variáveis acima
+   - **ANTES** do primeiro deploy!
+   - Se já deployou sem as variáveis:
+     - Adicione as variáveis
+     - Na aba "Deployments", clique em "..." → "Redeploy"
 
 3. **Deploy Automático**
    - Railway detecta o Dockerfile automaticamente
    - Build leva ~2-3 minutos
+   - Variáveis são injetadas durante o build
    - Aplicação roda na porta 8080
 
-4. **Acessar Aplicação**
+4. **Verificar**
+   - Abra o console do navegador
+   - Deve aparecer: `✅ [HelenaAPI] hasToken: true`
+   - Se aparecer `❌ hasToken: false`, refaça o build
+
+5. **Acessar Aplicação**
    - URL fornecida: `https://seu-projeto.up.railway.app`
 
 ## 🧪 Testar Localmente com Docker
