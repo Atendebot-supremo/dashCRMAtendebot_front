@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo } from 'react'
 import { Calendar } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
@@ -9,8 +9,8 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Card, CardContent } from '@/components/ui/card'
-// import { useUsers } from '@/lib/api/queries'
-// import { useChannels } from '@/lib/api/queries'
+import { useCards } from '@/lib/api/queries'
+import { extractUniqueResponsibles, extractUniqueChannels } from '@/lib/utils/stage-mapping'
 import type { DashboardFilters } from '@/lib/api/helena-types'
 
 interface FiltersBarProps {
@@ -19,9 +19,19 @@ interface FiltersBarProps {
 }
 
 const FiltersBar = ({ filters, onFiltersChange }: FiltersBarProps) => {
-  // Desabilitado temporariamente - rotas não existem na API
-  const users: any[] = []
-  const channels: any[] = []
+  // Buscar cards para extrair responsáveis e canais únicos
+  const { data: allCards = [] } = useCards({})
+  
+  // Extrair responsáveis únicos dos cards
+  const users = useMemo(() => {
+    return extractUniqueResponsibles(allCards)
+  }, [allCards])
+  
+  // Extrair canais únicos dos cards
+  const channels = useMemo(() => {
+    return extractUniqueChannels(allCards)
+  }, [allCards])
+  
   const usersLoading = false
   const channelsLoading = false
 
@@ -67,7 +77,7 @@ const FiltersBar = ({ filters, onFiltersChange }: FiltersBarProps) => {
   }
 
   return (
-    <Card>
+    <Card className="bg-white shadow-sm">
       <CardContent className="pt-6">
         <div className="flex flex-wrap items-center gap-4">
           {/* Período */}

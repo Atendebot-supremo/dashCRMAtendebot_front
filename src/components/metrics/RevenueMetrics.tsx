@@ -1,9 +1,7 @@
 import { useMemo } from 'react'
 import { DollarSign, TrendingUp, Users } from 'lucide-react'
-import MetricCard from '@/components/dashboard/MetricCard'
-import ChartCard from '@/components/dashboard/ChartCard'
-import BarChart from '@/components/charts/BarChart'
-import { Skeleton } from '@/components/ui/skeleton'
+import TremorMetricCard from '@/components/dashboard/TremorMetricCard'
+import { Card, Title, BarChart as TremorBarChart } from '@tremor/react'
 import { useCards } from '@/lib/api/queries'
 import { calculateRevenueMetrics } from '@/lib/utils/calculations'
 import {
@@ -69,9 +67,9 @@ const RevenueMetrics = ({ filters }: RevenueMetricsProps) => {
   if (isLoading) {
     return (
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        <Skeleton className="h-[120px]" />
-        <Skeleton className="h-[120px]" />
-        <Skeleton className="h-[120px]" />
+        <div className="h-[140px] animate-pulse rounded-lg bg-gray-200" />
+        <div className="h-[140px] animate-pulse rounded-lg bg-gray-200" />
+        <div className="h-[140px] animate-pulse rounded-lg bg-gray-200" />
       </div>
     )
   }
@@ -79,7 +77,7 @@ const RevenueMetrics = ({ filters }: RevenueMetricsProps) => {
   if (isError) {
     return (
       <div className="text-center py-8">
-        <p className="text-destructive">Erro ao carregar métricas de receita</p>
+        <p className="text-red-600">Erro ao carregar métricas de receita</p>
       </div>
     )
   }
@@ -88,19 +86,19 @@ const RevenueMetrics = ({ filters }: RevenueMetricsProps) => {
     <div className="space-y-6">
       {/* Cards de Métricas */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        <MetricCard
+        <TremorMetricCard
           title="Receita Total"
           value={formatCurrency(revenueMetrics.totalRevenue)}
           description="Total fechado no período"
           icon={DollarSign}
         />
-        <MetricCard
+        <TremorMetricCard
           title="Ticket Médio"
           value={formatCurrency(revenueMetrics.averageTicket)}
           description="Valor médio por venda"
           icon={TrendingUp}
         />
-        <MetricCard
+        <TremorMetricCard
           title="Vendas Fechadas"
           value={filteredCards.filter(
             (card) => card.status === 'closed' || card.status === 'concluido'
@@ -112,37 +110,31 @@ const RevenueMetrics = ({ filters }: RevenueMetricsProps) => {
 
       {/* Gráficos */}
       {sellerChartData.length > 0 && (
-        <ChartCard title="Receita por Vendedor">
-          <BarChart
+        <Card>
+          <Title>Receita por Vendedor</Title>
+          <TremorBarChart
+            className="mt-6"
             data={sellerChartData}
-            bars={[
-              {
-                key: 'value',
-                name: 'Receita (R$)',
-                color: 'hsl(var(--chart-1))',
-              },
-            ]}
-            xAxisKey="name"
-            height={300}
+            index="name"
+            categories={['value']}
+            colors={['blue']}
+            yAxisWidth={60}
           />
-        </ChartCard>
+        </Card>
       )}
 
       {channelChartData.length > 0 && (
-        <ChartCard title="Receita por Canal">
-          <BarChart
+        <Card>
+          <Title>Receita por Canal</Title>
+          <TremorBarChart
+            className="mt-6"
             data={channelChartData}
-            bars={[
-              {
-                key: 'value',
-                name: 'Receita (R$)',
-                color: 'hsl(var(--chart-2))',
-              },
-            ]}
-            xAxisKey="name"
-            height={300}
+            index="name"
+            categories={['value']}
+            colors={['green']}
+            yAxisWidth={60}
           />
-        </ChartCard>
+        </Card>
       )}
     </div>
   )

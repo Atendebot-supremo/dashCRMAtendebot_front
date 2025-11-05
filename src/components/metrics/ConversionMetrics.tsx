@@ -1,7 +1,6 @@
 import { useMemo } from 'react'
 import { Target, Clock, Zap } from 'lucide-react'
-import MetricCard from '@/components/dashboard/MetricCard'
-import { Skeleton } from '@/components/ui/skeleton'
+import TremorMetricCard from '@/components/dashboard/TremorMetricCard'
 import { useCards } from '@/lib/api/queries'
 import { calculateConversionMetrics } from '@/lib/utils/calculations'
 import {
@@ -21,7 +20,7 @@ const ConversionMetrics = ({ filters }: ConversionMetricsProps) => {
   const { data: cards = [], isLoading, isError } = useCards(filters)
 
   const filteredCards = useMemo(() => {
-    let filtered: Card[] = cards
+    let filtered: Card[] = Array.isArray(cards) ? cards : []
 
     if (filters?.startDate || filters?.endDate) {
       filtered = filterCardsByPeriod(
@@ -49,9 +48,9 @@ const ConversionMetrics = ({ filters }: ConversionMetricsProps) => {
   if (isLoading) {
     return (
       <div className="grid gap-4 md:grid-cols-3">
-        <Skeleton className="h-[120px]" />
-        <Skeleton className="h-[120px]" />
-        <Skeleton className="h-[120px]" />
+        <div className="h-[140px] animate-pulse rounded-lg bg-gray-200" />
+        <div className="h-[140px] animate-pulse rounded-lg bg-gray-200" />
+        <div className="h-[140px] animate-pulse rounded-lg bg-gray-200" />
       </div>
     )
   }
@@ -59,7 +58,7 @@ const ConversionMetrics = ({ filters }: ConversionMetricsProps) => {
   if (isError) {
     return (
       <div className="text-center py-8">
-        <p className="text-destructive">
+        <p className="text-red-600">
           Erro ao carregar métricas de conversão
         </p>
       </div>
@@ -68,19 +67,19 @@ const ConversionMetrics = ({ filters }: ConversionMetricsProps) => {
 
   return (
     <div className="grid gap-4 md:grid-cols-3">
-      <MetricCard
+      <TremorMetricCard
         title="Taxa de Conversão Geral"
         value={formatPercentage(conversionMetrics.overallConversionRate)}
         description="Lead → Venda"
         icon={Target}
       />
-      <MetricCard
+      <TremorMetricCard
         title="Ciclo de Vendas Médio"
         value={formatDays(conversionMetrics.averageSalesCycle)}
         description="Tempo médio de fechamento"
         icon={Clock}
       />
-      <MetricCard
+      <TremorMetricCard
         title="Velocidade de Resposta"
         value={formatMinutes(conversionMetrics.averageResponseTime)}
         description="Tempo médio de primeira resposta"

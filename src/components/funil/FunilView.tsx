@@ -1,8 +1,6 @@
 import { useMemo } from 'react'
-import ChartCard from '@/components/dashboard/ChartCard'
+import { Card, Title, BarChart as TremorBarChart } from '@tremor/react'
 import FunnelChart from '@/components/charts/FunnelChart'
-import BarChart from '@/components/charts/BarChart'
-import { Skeleton } from '@/components/ui/skeleton'
 import { useCards } from '@/lib/api/queries'
 import { calculateFunnelMetrics } from '@/lib/utils/calculations'
 import { filterCardsByPeriod, filterCardsByUser, filterCardsByChannel } from '@/lib/utils/calculations'
@@ -62,47 +60,54 @@ const FunilView = ({ filters }: FunilViewProps) => {
   if (isLoading) {
     return (
       <div className="space-y-4">
-        <Skeleton className="h-[400px] w-full" />
-        <Skeleton className="h-[300px] w-full" />
+        <div className="h-[400px] animate-pulse rounded-lg bg-gray-200" />
+        <div className="h-[300px] animate-pulse rounded-lg bg-gray-200" />
       </div>
     )
   }
 
   if (isError) {
     return (
-      <ChartCard title="Funil de Vendas" className="text-center py-8">
-        <p className="text-destructive">Erro ao carregar dados do funil</p>
-      </ChartCard>
+      <Card className="text-center py-8">
+        <p className="text-red-600">Erro ao carregar dados do funil</p>
+      </Card>
     )
   }
 
   if (funnelMetrics.length === 0) {
     return (
-      <ChartCard title="Funil de Vendas" className="text-center py-8">
-        <p className="text-muted-foreground">Nenhum dado disponível</p>
-      </ChartCard>
+      <Card className="text-center py-8">
+        <p className="text-gray-600">Nenhum dado disponível</p>
+      </Card>
     )
   }
 
   return (
     <div className="space-y-6">
       {/* Gráfico de Funil */}
-      <ChartCard title="Funil de Vendas - Quantidade de Leads por Etapa">
-        <FunnelChart data={chartData} height={400} />
-      </ChartCard>
+      <Card>
+        <Title>Funil de Vendas - Quantidade de Leads por Etapa</Title>
+        <div className="mt-6">
+          <FunnelChart data={chartData} height={400} />
+        </div>
+      </Card>
 
       {/* Gráfico de Valores */}
-      <ChartCard title="Valor em Reais por Etapa">
-        <BarChart
+      <Card>
+        <Title>Valor em Reais por Etapa</Title>
+        <TremorBarChart
+          className="mt-6"
           data={valueChartData}
-          bars={[{ key: 'value', name: 'Valor (R$)', color: 'hsl(var(--chart-1))' }]}
-          xAxisKey="name"
-          height={300}
+          index="name"
+          categories={['value']}
+          colors={['blue']}
+          yAxisWidth={60}
         />
-      </ChartCard>
+      </Card>
 
       {/* Tabela de Métricas */}
-      <ChartCard title="Métricas Detalhadas por Etapa">
+      <Card>
+        <Title>Métricas Detalhadas por Etapa</Title>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
@@ -133,7 +138,7 @@ const FunilView = ({ filters }: FunilViewProps) => {
             </tbody>
           </table>
         </div>
-      </ChartCard>
+      </Card>
     </div>
   )
 }

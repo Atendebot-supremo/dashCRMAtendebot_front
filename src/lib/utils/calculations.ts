@@ -66,10 +66,12 @@ export const calculateFunnelMetrics = (cards: Card[]): FunnelMetrics[] => {
   const stageMap = new Map<string, { cards: Card[]; totalValue: number }>()
 
   cards.forEach((card) => {
-    const stage = card.stage || 'Sem etapa'
+    // Usar stepTitle se disponível, senão usar stepId ou 'Sem etapa'
+    const stage = card.stepTitle || card.stepId || card.stage || 'Sem etapa'
     const current = stageMap.get(stage) || { cards: [], totalValue: 0 }
     current.cards.push(card)
-    current.totalValue += card.value || 0
+    // Usar monetaryAmount se disponível, senão usar value
+    current.totalValue += card.monetaryAmount || card.value || 0
     stageMap.set(stage, current)
   })
 
@@ -278,7 +280,8 @@ export const filterCardsByUser = (
   userId?: string
 ): Card[] => {
   if (!userId) return cards
-  return cards.filter((card) => card.assignedTo === userId)
+  // Usar responsibleUserId se disponível, senão usar assignedTo
+  return cards.filter((card) => card.responsibleUserId === userId || card.assignedTo === userId)
 }
 
 export const filterCardsByChannel = (
