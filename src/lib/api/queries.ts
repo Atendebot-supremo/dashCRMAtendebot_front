@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { helenaClient } from './helena-client'
+import { crmClient } from './crm-client'
 import type {
   Panel,
   Card,
@@ -7,19 +7,22 @@ import type {
   User,
   DashboardFilters,
 } from './helena-types'
+import type { CardsFilters } from './crm-client'
 
 // Query keys
 export const queryKeys = {
-  panels: ['helena', 'panels'] as const,
-  panel: (id: string) => ['helena', 'panel', id] as const,
-  cards: (filters?: DashboardFilters) =>
-    ['helena', 'cards', filters] as const,
-  card: (id: string) => ['helena', 'card', id] as const,
+  panels: ['crm', 'panels'] as const,
+  panel: (id: string) => ['crm', 'panel', id] as const,
+  cards: (filters?: CardsFilters) =>
+    ['crm', 'cards', filters] as const,
+  card: (id: string) => ['crm', 'card', id] as const,
+  agents: (panelId: string) => ['crm', 'agents', panelId] as const,
+  agent: (id: string) => ['crm', 'agent', id] as const,
   contacts: (filters?: DashboardFilters) =>
-    ['helena', 'contacts', filters] as const,
-  users: ['helena', 'users'] as const,
-  user: (id: string) => ['helena', 'user', id] as const,
-  channels: ['helena', 'channels'] as const,
+    ['crm', 'contacts', filters] as const,
+  users: ['crm', 'users'] as const,
+  user: (id: string) => ['crm', 'user', id] as const,
+  channels: ['crm', 'channels'] as const,
 }
 
 // Hooks para Painéis
@@ -28,9 +31,20 @@ export const usePanels = () => {
     queryKey: queryKeys.panels,
     queryFn: async () => {
       console.log('🔍 [usePanels] Iniciando busca de painéis...')
-      const response = await helenaClient.getPanels()
+      const response = await crmClient.getPanels()
       const panels = response.items || []
-      console.log(`🔍 [usePanels] Painéis retornados: ${panels.length}`, panels)
+      console.log(`🔍 [usePanels] Painéis retornados: ${panels.length}`)
+      console.log('🔍 [usePanels] Estrutura completa da resposta:', response)
+      console.log('🔍 [usePanels] Primeiro painel completo:', panels[0])
+      if (panels.length > 0) {
+        console.log('🔍 [usePanels] Campos do primeiro painel:', {
+          id: panels[0].id,
+          title: panels[0].title,
+          description: panels[0].description,
+          hasTitle: !!panels[0].title,
+          allKeys: Object.keys(panels[0]),
+        })
+      }
       return panels
     },
     staleTime: 5 * 60 * 1000, // 5 minutos
@@ -47,7 +61,7 @@ export const usePanels = () => {
 export const usePanel = (panelId: string, enabled = true) => {
   return useQuery({
     queryKey: queryKeys.panel(panelId),
-    queryFn: () => helenaClient.getPanelById(panelId),
+    queryFn: () => crmClient.getPanelById(panelId),
     enabled: enabled && !!panelId,
     staleTime: 5 * 60 * 1000,
     retry: 1,
@@ -55,17 +69,21 @@ export const usePanel = (panelId: string, enabled = true) => {
 }
 
 // Hooks para Cards
-export const useCards = (filters?: DashboardFilters, enabled = true) => {
+export const useCards = (filters?: CardsFilters, enabled = true) => {
   return useQuery({
     queryKey: queryKeys.cards(filters),
     queryFn: async () => {
+      if (!filters?.panelId) {
+        throw new Error('panelId é obrigatório para buscar cards')
+      }
+      
       console.log('🔍 [useCards] Iniciando busca de cards...', { filters, enabled })
-      const response = await helenaClient.getCards(filters)
+      const response = await crmClient.getCards(filters)
       const cards = response.items || []
       console.log(`🔍 [useCards] Cards retornados: ${cards.length}`, cards.slice(0, 3))
       return cards
     },
-    enabled,
+    enabled: enabled && !!filters?.panelId,
     staleTime: 2 * 60 * 1000, // 2 minutos (dados mais dinâmicos)
     retry: 1,
     onSuccess: (data) => {
@@ -80,22 +98,46 @@ export const useCards = (filters?: DashboardFilters, enabled = true) => {
 export const useCard = (cardId: string, enabled = true) => {
   return useQuery({
     queryKey: queryKeys.card(cardId),
-    queryFn: () => helenaClient.getCardById(cardId),
+    queryFn: () => crmClient.getCardById(cardId),
     enabled: enabled && !!cardId,
     staleTime: 2 * 60 * 1000,
     retry: 1,
   })
 }
 
-// Hooks para Contatos
+// Hooks para Agentes
+export const useAgents = (panelId: string, enabled = true) => {
+  return useQuery({
+    queryKey: queryKeys.agents(panelId),
+    queryFn: async () => {
+      const response = await crmClient.getAgents(panelId)
+      return response.items || []
+    },
+    enabled: enabled && !!panelId,
+    staleTime: 5 * 60 * 1000,
+    retry: 1,
+  })
+}
+
+export const useAgent = (id: string, enabled = true) => {
+  return useQuery({
+    queryKey: queryKeys.agent(id),
+    queryFn: () => crmClient.getAgentById(id),
+    enabled: enabled && !!id,
+    staleTime: 5 * 60 * 1000,
+    retry: 1,
+  })
+}
+
+// Hooks para Contatos - Mantido para compatibilidade, mas pode não estar disponível na nova API
 export const useContacts = (filters?: DashboardFilters, enabled = true) => {
   return useQuery({
     queryKey: queryKeys.contacts(filters),
     queryFn: async () => {
-      const response = await helenaClient.getContacts(filters)
-      return response.items || []
+      // TODO: Implementar quando a rota estiver disponível na nova API
+      return []
     },
-    enabled,
+    enabled: false, // Desabilitado até a rota existir
     staleTime: 2 * 60 * 1000,
     retry: 1,
   })

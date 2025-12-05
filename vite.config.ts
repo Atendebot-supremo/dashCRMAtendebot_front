@@ -13,10 +13,9 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'https://api.flw.chat',
+        target: process.env.VITE_API_URL || 'http://localhost:3000',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api/, ''),
-        secure: true,
+        secure: false,
         configure: (proxy, _options) => {
           proxy.on('error', (err, _req, _res) => {
             console.log('proxy error', err)

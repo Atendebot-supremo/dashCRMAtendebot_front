@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { Calendar } from 'lucide-react'
+import { Calendar, LayoutDashboard } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   Select,
@@ -12,15 +12,32 @@ import { Card, CardContent } from '@/components/ui/card'
 import { useCards } from '@/lib/api/queries'
 import { extractUniqueResponsibles, extractUniqueChannels } from '@/lib/utils/stage-mapping'
 import type { DashboardFilters } from '@/lib/api/helena-types'
+import type { Panel } from '@/lib/api/crm-client'
 
 interface FiltersBarProps {
   filters: DashboardFilters
+  panels: Panel[]
   onFiltersChange: (filters: DashboardFilters) => void
 }
 
-const FiltersBar = ({ filters, onFiltersChange }: FiltersBarProps) => {
+const FiltersBar = ({ filters, panels, onFiltersChange }: FiltersBarProps) => {
+  // Debug: verificar estrutura dos painéis
+  console.log('🔍 [FiltersBar] Painéis recebidos:', panels)
+  console.log('🔍 [FiltersBar] Primeiro painel:', panels[0])
+  console.log('🔍 [FiltersBar] Título do primeiro painel:', panels[0]?.title)
+  
   // Buscar cards para extrair responsáveis e canais únicos
-  const { data: allCards = [] } = useCards({})
+  // Só buscar se tiver panelId
+  const { data: allCards = [] } = useCards(
+    filters.panelId 
+      ? {
+          panelId: filters.panelId,
+          startDate: filters.startDate,
+          endDate: filters.endDate,
+        }
+      : undefined,
+    !!filters.panelId
+  )
   
   // Extrair responsáveis únicos dos cards
   const users = useMemo(() => {
@@ -34,6 +51,17 @@ const FiltersBar = ({ filters, onFiltersChange }: FiltersBarProps) => {
   
   const usersLoading = false
   const channelsLoading = false
+
+  const handlePanelChange = (value: string) => {
+    // Quando o painel muda, limpar filtros de vendedor e canal
+    // pois são específicos do painel
+    onFiltersChange({
+      ...filters,
+      panelId: value,
+      userId: undefined,
+      channelId: undefined,
+    })
+  }
 
   const handleUserChange = (value: string) => {
     onFiltersChange({ ...filters, userId: value === 'all' ? undefined : value })
@@ -80,6 +108,43 @@ const FiltersBar = ({ filters, onFiltersChange }: FiltersBarProps) => {
     <Card className="bg-white shadow-sm">
       <CardContent className="pt-6">
         <div className="flex flex-wrap items-center gap-4">
+          {/* Painel - PRIMEIRO FILTRO */}
+          <div className="flex items-center gap-2">
+            <LayoutDashboard className="h-4 w-4 text-muted-foreground" />
+            <Select
+              value={filters.panelId || undefined}
+              onValueChange={handlePanelChange}
+              disabled={panels.length === 0}
+            >
+              <SelectTrigger className="w-[220px]">
+                <SelectValue 
+                  placeholder={panels.length === 0 ? "Carregando painéis..." : "Selecione um painel"}
+                >
+                  {filters.panelId 
+                    ? panels.find(p => p.id === filters.panelId)?.title || 'Painel selecionado'
+                    : undefined
+                  }
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                {panels.length === 0 ? (
+                  <div className="px-2 py-1.5 text-sm text-muted-foreground">
+                    Nenhum painel disponível
+                  </div>
+                ) : (
+                  panels.map((panel) => {
+                    const panelTitle = panel.title || panel.key || 'Painel sem título'
+                    return (
+                      <SelectItem key={panel.id} value={panel.id}>
+                        {panelTitle}
+                      </SelectItem>
+                    )
+                  })
+                )}
+              </SelectContent>
+            </Select>
+          </div>
+
           {/* Período */}
           <div className="flex items-center gap-2">
             <Calendar className="h-4 w-4 text-muted-foreground" />
@@ -147,7 +212,10 @@ const FiltersBar = ({ filters, onFiltersChange }: FiltersBarProps) => {
           <Button
             variant="outline"
             onClick={() => {
-              onFiltersChange({})
+              // Manter o panelId ao limpar, mas limpar os outros filtros
+              onFiltersChange({
+                panelId: filters.panelId,
+              })
             }}
           >
             Limpar Filtros

@@ -10,21 +10,44 @@ import TemporalComparison from '@/components/metrics/TemporalComparison'
 import ProductAnalysis from '@/components/metrics/ProductAnalysis'
 import { useCards, usePanels } from '@/lib/api/queries'
 import { updateStepMapping } from '@/lib/utils/stage-mapping'
-import { helenaClient } from '@/lib/api/helena-client'
+import { crmClient } from '@/lib/api/crm-client'
 import type { DashboardFilters } from '@/lib/api/helena-types'
 
 const DashboardPage = () => {
-  const [filters, setFilters] = useState<DashboardFilters>({})
-  const { data: cards = [] } = useCards(filters)
-  const { data: panelsResponse } = usePanels()
+  const { data: panels = [] } = usePanels()
+  const firstPanelId = panels?.[0]?.id
   
-  // Buscar informações completas do painel para mapear etapas
+  // Inicializar filtros com o primeiro painel
+  const [filters, setFilters] = useState<DashboardFilters>({
+    panelId: firstPanelId,
+  })
+  
+  // Atualizar panelId quando os painéis carregarem
+  useEffect(() => {
+    if (firstPanelId && !filters.panelId) {
+      setFilters(prev => ({ ...prev, panelId: firstPanelId }))
+    }
+  }, [firstPanelId, filters.panelId])
+  
+  const { data: cards = [] } = useCards(
+    filters.panelId 
+      ? {
+          panelId: filters.panelId,
+          startDate: filters.startDate,
+          endDate: filters.endDate,
+          userId: filters.userId,
+          channelId: filters.channelId,
+        }
+      : undefined,
+    !!filters.panelId
+  )
+  
+  // Buscar informações completas do painel selecionado para mapear etapas
   useEffect(() => {
     const fetchPanelDetails = async () => {
-      if (panelsResponse?.items && panelsResponse.items.length > 0) {
+      if (filters.panelId) {
         try {
-          const firstPanel = panelsResponse.items[0]
-          const panelDetails = await helenaClient.getPanelById(firstPanel.id)
+          const panelDetails = await crmClient.getPanelById(filters.panelId)
           
           // Se o painel tiver steps, atualizar o mapeamento
           if (panelDetails?.steps && Array.isArray(panelDetails.steps)) {
@@ -37,7 +60,7 @@ const DashboardPage = () => {
     }
     
     fetchPanelDetails()
-  }, [panelsResponse])
+  }, [filters.panelId])
 
   // Log para debug - ver estrutura dos dados
   console.group('📊 [DashboardPage] Análise completa dos dados')
@@ -71,7 +94,11 @@ const DashboardPage = () => {
   return (
     <DashboardLayout>
       {/* Filtros */}
-      <FiltersBar filters={filters} onFiltersChange={handleFiltersChange} />
+      <FiltersBar 
+        filters={filters} 
+        panels={panels}
+        onFiltersChange={handleFiltersChange} 
+      />
 
       {/* Métricas de Conversão */}
       <ConversionMetrics filters={filters} />
