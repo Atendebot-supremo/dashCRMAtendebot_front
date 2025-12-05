@@ -9,6 +9,7 @@ import {
   filterCardsByPeriod,
   filterCardsByUser,
   filterCardsByChannel,
+  filterCardsByStep,
 } from '@/lib/utils/calculations'
 import { formatCurrency } from '@/lib/utils/format'
 import type { DashboardFilters } from '@/lib/api/helena-types'
@@ -38,6 +39,10 @@ const LossAnalysis = ({ filters }: LossAnalysisProps) => {
 
     if (filters?.channelId) {
       filtered = filterCardsByChannel(filtered, filters.channelId)
+    }
+
+    if (filters?.stepId) {
+      filtered = filterCardsByStep(filtered, filters.stepId)
     }
 
     return filtered

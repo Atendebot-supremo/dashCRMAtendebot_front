@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { Calendar, LayoutDashboard } from 'lucide-react'
+import { Calendar, LayoutDashboard, GitBranch } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   Select,
@@ -9,8 +9,8 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Card, CardContent } from '@/components/ui/card'
-import { useCards } from '@/lib/api/queries'
-import { extractUniqueResponsibles, extractUniqueChannels } from '@/lib/utils/stage-mapping'
+import { useCards, useAgents } from '@/lib/api/queries'
+import { extractUniqueChannels } from '@/lib/utils/stage-mapping'
 import type { DashboardFilters } from '@/lib/api/helena-types'
 import type { Panel } from '@/lib/api/crm-client'
 
@@ -21,13 +21,13 @@ interface FiltersBarProps {
 }
 
 const FiltersBar = ({ filters, panels, onFiltersChange }: FiltersBarProps) => {
-  // Debug: verificar estrutura dos painéis
-  console.log('🔍 [FiltersBar] Painéis recebidos:', panels)
-  console.log('🔍 [FiltersBar] Primeiro painel:', panels[0])
-  console.log('🔍 [FiltersBar] Título do primeiro painel:', panels[0]?.title)
+  // Buscar agentes do painel selecionado
+  const { data: agents = [], isLoading: agentsLoading } = useAgents(
+    filters.panelId || '',
+    !!filters.panelId
+  )
   
-  // Buscar cards para extrair responsáveis e canais únicos
-  // Só buscar se tiver panelId
+  // Buscar cards para extrair canais únicos
   const { data: allCards = [] } = useCards(
     filters.panelId 
       ? {
@@ -39,28 +39,83 @@ const FiltersBar = ({ filters, panels, onFiltersChange }: FiltersBarProps) => {
     !!filters.panelId
   )
   
-  // Extrair responsáveis únicos dos cards
+  // Obter painel selecionado e seus steps (funil)
+  const selectedPanel = useMemo(() => {
+    if (!filters.panelId || panels.length === 0) return null
+    return panels.find(p => p.id === filters.panelId) || null
+  }, [panels, filters.panelId])
+  
+  // Steps (etapas do funil) do painel selecionado
+  const steps = useMemo(() => {
+    if (!selectedPanel?.steps || selectedPanel.steps.length === 0) {
+      // Tentar extrair steps únicos dos cards como fallback
+      const uniqueSteps = new Map<string, string>()
+      allCards.forEach(card => {
+        if (card.stepId) {
+          // Se tem stepTitle, usar; senão, criar um nome amigável
+          const stepTitle = card.stepTitle || `Etapa ${card.stepId.substring(0, 8)}`
+          uniqueSteps.set(card.stepId, stepTitle)
+        }
+      })
+      
+      if (uniqueSteps.size > 0) {
+        return Array.from(uniqueSteps.entries()).map(([id, title]) => ({
+          id,
+          title,
+        }))
+      }
+      
+      return []
+    }
+    
+    // Ordenar por position se disponível
+    return [...selectedPanel.steps].sort((a, b) => (a.position || 0) - (b.position || 0))
+  }, [selectedPanel, allCards])
+  
+  // Debug: verificar steps
+  console.log('🔄 [FiltersBar] Painel selecionado:', selectedPanel?.title)
+  console.log('🔄 [FiltersBar] Steps do painel:', steps)
+  
+  // Usar agentes ao invés de extrair dos cards
   const users = useMemo(() => {
-    return extractUniqueResponsibles(allCards)
-  }, [allCards])
+    if (agents.length > 0) {
+      // Mapear agentes para o formato esperado
+      // userId do agente = responsibleUserId dos cards
+      return agents.map((agent) => ({
+        id: agent.userId,
+        name: agent.name || agent.shortName || 'Sem nome',
+      }))
+    }
+    return []
+  }, [agents])
+  
+  // Debug: verificar agentes
+  console.log('👥 [FiltersBar] Agentes carregados:', agents)
+  console.log('👥 [FiltersBar] Usuários mapeados:', users)
   
   // Extrair canais únicos dos cards
   const channels = useMemo(() => {
     return extractUniqueChannels(allCards)
   }, [allCards])
   
-  const usersLoading = false
+  const usersLoading = agentsLoading
+  const stepsLoading = false
   const channelsLoading = false
 
   const handlePanelChange = (value: string) => {
-    // Quando o painel muda, limpar filtros de vendedor e canal
+    // Quando o painel muda, limpar filtros de vendedor, canal e etapa
     // pois são específicos do painel
     onFiltersChange({
       ...filters,
       panelId: value,
       userId: undefined,
       channelId: undefined,
+      stepId: undefined,
     })
+  }
+  
+  const handleStepChange = (value: string) => {
+    onFiltersChange({ ...filters, stepId: value === 'all' ? undefined : value })
   }
 
   const handleUserChange = (value: string) => {
@@ -164,6 +219,28 @@ const FiltersBar = ({ filters, panels, onFiltersChange }: FiltersBarProps) => {
             </Select>
           </div>
 
+          {/* Etapa/Funil */}
+          <div className="flex items-center gap-2">
+            <GitBranch className="h-4 w-4 text-muted-foreground" />
+            <Select
+              value={filters.stepId || 'all'}
+              onValueChange={handleStepChange}
+              disabled={stepsLoading || steps.length === 0}
+            >
+              <SelectTrigger className="w-[200px]">
+                <SelectValue placeholder="Todas as etapas" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas as etapas</SelectItem>
+                {steps.map((step) => (
+                  <SelectItem key={step.id} value={step.id}>
+                    {step.title}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
           {/* Usuário/Vendedor */}
           <div className="flex items-center gap-2">
             <span className="text-sm text-muted-foreground">Vendedor:</span>
@@ -215,6 +292,11 @@ const FiltersBar = ({ filters, panels, onFiltersChange }: FiltersBarProps) => {
               // Manter o panelId ao limpar, mas limpar os outros filtros
               onFiltersChange({
                 panelId: filters.panelId,
+                stepId: undefined,
+                userId: undefined,
+                channelId: undefined,
+                startDate: undefined,
+                endDate: undefined,
               })
             }}
           >

@@ -7,6 +7,7 @@ import {
   filterCardsByPeriod,
   filterCardsByUser,
   filterCardsByChannel,
+  filterCardsByStep,
   calculateConversionRate,
 } from '@/lib/utils/calculations'
 import { calculateDaysBetween } from '@/lib/utils/date'
@@ -38,6 +39,10 @@ const ProductAnalysis = ({ filters }: ProductAnalysisProps) => {
 
     if (filters?.channelId) {
       filtered = filterCardsByChannel(filtered, filters.channelId)
+    }
+
+    if (filters?.stepId) {
+      filtered = filterCardsByStep(filtered, filters.stepId)
     }
 
     return filtered

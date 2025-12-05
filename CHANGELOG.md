@@ -93,14 +93,58 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ---
 
+## [1.1.0] - 2024-12
+
+### ✨ Adicionado
+
+#### Autenticação
+- **Tela de Login** - Nova página de login com abas para telefone e email
+- **AuthContext** - Contexto global de autenticação
+- **ProtectedRoute** - Componente para rotas protegidas
+- **JWT Authentication** - Integração com autenticação via Bearer Token
+
+#### Filtros Avançados
+- **Filtro de Painel** - Seleção dinâmica de painéis CRM
+- **Filtro de Vendedor** - Lista agentes com nomes reais (não IDs)
+- **Filtro de Etapa/Funil** - Filtro por etapas do funil de vendas
+- **Filtro de Canal** - Filtro por canal de origem
+- **Filtro de Período** - Período com opções predefinidas (hoje, semana, mês, ano)
+
+#### API Client
+- **crm-client.ts** - Novo cliente API para rotas CRM do backend intermediário
+- **Logging detalhado** - Logs completos de todas as requisições para debug
+- **Error handling** - Tratamento de erros 401 com redirect para login
+
+#### Melhorias de UI/UX
+- **Nome dos painéis** - Exibição do título do painel em vez de IDs
+- **Nome dos vendedores** - Exibição do nome do agente em vez de IDs
+- **Nome das etapas** - Mapeamento dinâmico de stepId para título
+- **Ícones nos filtros** - Ícones descritivos para cada filtro
+
+### 🔧 Alterado
+
+- Migração de `helena-client.ts` para `crm-client.ts`
+- Atualização de `queries.ts` para usar novo cliente CRM
+- Interface `Panel` atualizada com campo `title` e `steps`
+- Interface `DashboardFilters` com campo `stepId`
+- Todos componentes de métricas atualizados com filtro de step
+
+### 📦 Dependências
+
+- Adicionado `sonner` para notificações toast
+
+### 🔐 Segurança
+
+- ✅ Token JWT armazenado no localStorage
+- ✅ Redirecionamento automático em caso de 401
+- ✅ Limpeza de dados sensíveis no logout
+
+---
+
 ## [Unreleased]
 
 ### 🚧 Planejado
 
-- [ ] Backend intermediário (dashCRMAtendebot_back)
-- [ ] Autenticação JWT
-- [ ] Login/logout
-- [ ] Multi-tenancy
 - [ ] Cache avançado no backend
 - [ ] Exportação de dados (Excel, PDF)
 - [ ] Notificações em tempo real

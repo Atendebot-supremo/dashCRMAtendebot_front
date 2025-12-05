@@ -7,6 +7,7 @@ import {
   filterCardsByPeriod,
   filterCardsByUser,
   filterCardsByChannel,
+  filterCardsByStep,
 } from '@/lib/utils/calculations'
 import { formatPercentage, formatDays, formatMinutes } from '@/lib/utils/format'
 import type { DashboardFilters } from '@/lib/api/helena-types'
@@ -36,6 +37,10 @@ const ConversionMetrics = ({ filters }: ConversionMetricsProps) => {
 
     if (filters?.channelId) {
       filtered = filterCardsByChannel(filtered, filters.channelId)
+    }
+
+    if (filters?.stepId) {
+      filtered = filterCardsByStep(filtered, filters.stepId)
     }
 
     return filtered

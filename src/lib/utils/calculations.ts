@@ -294,3 +294,11 @@ export const filterCardsByChannel = (
   return cards.filter((card) => card.channel === channelId)
 }
 
+export const filterCardsByStep = (
+  cards: Card[],
+  stepId?: string
+): Card[] => {
+  if (!stepId) return cards
+  return cards.filter((card) => card.stepId === stepId)
+}
+

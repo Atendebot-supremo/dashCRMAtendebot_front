@@ -8,10 +8,11 @@ import {
   filterCardsByPeriod,
   filterCardsByUser,
   filterCardsByChannel,
+  filterCardsByStep,
 } from '@/lib/utils/calculations'
 import { formatCurrency } from '@/lib/utils/format'
 import type { DashboardFilters } from '@/lib/api/helena-types'
-import type { Card } from '@/lib/api/helena-types'
+import type { Card as CardType } from '@/lib/api/helena-types'
 
 interface RevenueMetricsProps {
   filters?: DashboardFilters
@@ -21,7 +22,7 @@ const RevenueMetrics = ({ filters }: RevenueMetricsProps) => {
   const { data: cards = [], isLoading, isError } = useCards(filters)
 
   const filteredCards = useMemo(() => {
-    let filtered: Card[] = cards
+    let filtered: CardType[] = cards
 
     if (filters?.startDate || filters?.endDate) {
       filtered = filterCardsByPeriod(
@@ -37,6 +38,10 @@ const RevenueMetrics = ({ filters }: RevenueMetricsProps) => {
 
     if (filters?.channelId) {
       filtered = filterCardsByChannel(filtered, filters.channelId)
+    }
+
+    if (filters?.stepId) {
+      filtered = filterCardsByStep(filtered, filters.stepId)
     }
 
     return filtered

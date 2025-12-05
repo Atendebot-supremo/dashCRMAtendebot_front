@@ -8,6 +8,7 @@ import {
   filterCardsByPeriod,
   filterCardsByUser,
   filterCardsByChannel,
+  filterCardsByStep,
 } from '@/lib/utils/calculations'
 import { calculateConversionRate } from '@/lib/utils/calculations'
 import { formatCurrency, formatPercentage } from '@/lib/utils/format'
@@ -36,6 +37,10 @@ const SellerPerformance = ({ filters }: SellerPerformanceProps) => {
 
     if (filters?.channelId) {
       filtered = filterCardsByChannel(filtered, filters.channelId)
+    }
+
+    if (filters?.stepId) {
+      filtered = filterCardsByStep(filtered, filters.stepId)
     }
 
     return filtered

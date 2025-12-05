@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import DashboardLayout from '@/components/dashboard/DashboardLayout'
 import FiltersBar from '@/components/dashboard/FiltersBar'
 import FunilView from '@/components/funil/FunilView'
@@ -10,7 +10,6 @@ import TemporalComparison from '@/components/metrics/TemporalComparison'
 import ProductAnalysis from '@/components/metrics/ProductAnalysis'
 import { useCards, usePanels } from '@/lib/api/queries'
 import { updateStepMapping } from '@/lib/utils/stage-mapping'
-import { crmClient } from '@/lib/api/crm-client'
 import type { DashboardFilters } from '@/lib/api/helena-types'
 
 const DashboardPage = () => {
@@ -29,6 +28,31 @@ const DashboardPage = () => {
     }
   }, [firstPanelId, filters.panelId])
   
+  // Obter o painel selecionado com seus steps
+  const selectedPanel = useMemo(() => {
+    if (!filters.panelId || panels.length === 0) return null
+    return panels.find(p => p.id === filters.panelId) || null
+  }, [panels, filters.panelId])
+  
+  // Atualizar mapeamento de etapas quando o painel selecionado mudar
+  useEffect(() => {
+    if (selectedPanel?.steps && Array.isArray(selectedPanel.steps) && selectedPanel.steps.length > 0) {
+      console.log('📋 [DashboardPage] Atualizando mapeamento de etapas do painel:', {
+        panelId: selectedPanel.id,
+        panelTitle: selectedPanel.title,
+        stepsCount: selectedPanel.steps.length,
+        steps: selectedPanel.steps.map(s => ({ id: s.id, title: s.title })),
+      })
+      updateStepMapping(selectedPanel.steps)
+    } else {
+      console.warn('⚠️ [DashboardPage] Painel sem steps:', {
+        panelId: filters.panelId,
+        panelTitle: selectedPanel?.title,
+        stepsAvailable: selectedPanel?.steps,
+      })
+    }
+  }, [selectedPanel, filters.panelId])
+  
   const { data: cards = [] } = useCards(
     filters.panelId 
       ? {
@@ -37,30 +61,11 @@ const DashboardPage = () => {
           endDate: filters.endDate,
           userId: filters.userId,
           channelId: filters.channelId,
+          stepId: filters.stepId,
         }
       : undefined,
     !!filters.panelId
   )
-  
-  // Buscar informações completas do painel selecionado para mapear etapas
-  useEffect(() => {
-    const fetchPanelDetails = async () => {
-      if (filters.panelId) {
-        try {
-          const panelDetails = await crmClient.getPanelById(filters.panelId)
-          
-          // Se o painel tiver steps, atualizar o mapeamento
-          if (panelDetails?.steps && Array.isArray(panelDetails.steps)) {
-            updateStepMapping(panelDetails.steps)
-          }
-        } catch (error) {
-          console.error('Erro ao buscar detalhes do painel:', error)
-        }
-      }
-    }
-    
-    fetchPanelDetails()
-  }, [filters.panelId])
 
   // Log para debug - ver estrutura dos dados
   console.group('📊 [DashboardPage] Análise completa dos dados')

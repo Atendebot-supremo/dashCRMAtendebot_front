@@ -1,11 +1,31 @@
 // Tipos TypeScript para a API HelenaCRM
 
+export interface PanelStep {
+  id: string
+  title: string
+  phase?: string
+  position?: number
+}
+
 export interface Panel {
   id: string
-  name: string
+  name?: string
+  title?: string // Nome real do painel
   description?: string
   createdAt?: string
   updatedAt?: string
+  companyId?: string
+  archived?: boolean
+  scope?: string
+  departmentIds?: string[] | null
+  userId?: string
+  thumbnailId?: string | null
+  thumbnailFile?: string | null
+  key?: string
+  overdueCardCount?: number
+  stepTitles?: string[] | null
+  tags?: any[] | null
+  steps?: PanelStep[] // Etapas do painel
 }
 
 export interface Card {
@@ -98,6 +118,7 @@ export interface DashboardFilters {
   userId?: string
   channelId?: string
   panelId?: string
+  stepId?: string // Etapa/funil específica
 }
 
 export interface FunnelMetrics {

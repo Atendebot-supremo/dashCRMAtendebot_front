@@ -35,16 +35,21 @@ export const usePanels = () => {
       const panels = response.items || []
       console.log(`🔍 [usePanels] Painéis retornados: ${panels.length}`)
       console.log('🔍 [usePanels] Estrutura completa da resposta:', response)
-      console.log('🔍 [usePanels] Primeiro painel completo:', panels[0])
-      if (panels.length > 0) {
-        console.log('🔍 [usePanels] Campos do primeiro painel:', {
-          id: panels[0].id,
-          title: panels[0].title,
-          description: panels[0].description,
-          hasTitle: !!panels[0].title,
-          allKeys: Object.keys(panels[0]),
+      
+      // Log detalhado de cada painel e seus steps
+      panels.forEach((panel, index) => {
+        console.log(`📋 [usePanels] Painel ${index + 1}:`, {
+          id: panel.id,
+          title: panel.title,
+          name: panel.name,
+          key: panel.key,
+          hasSteps: !!panel.steps,
+          stepsCount: panel.steps?.length || 0,
+          steps: panel.steps?.map(s => ({ id: s.id, title: s.title, phase: s.phase })) || [],
+          allKeys: Object.keys(panel),
         })
-      }
+      })
+      
       return panels
     },
     staleTime: 5 * 60 * 1000, // 5 minutos

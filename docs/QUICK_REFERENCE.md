@@ -101,8 +101,9 @@ curl "http://localhost:3000/api/metrics/dashboard?panelId=panel-123&startDate=20
 | `panelId` | string | ✅ | ID do painel | `panel-uuid-123` |
 | `startDate` | string (ISO) | ❌ | Data inicial | `2024-01-01` |
 | `endDate` | string (ISO) | ❌ | Data final | `2024-01-31` |
-| `userId` | string | ❌ | ID do vendedor | `user-uuid-1` |
+| `userId` | string | ❌ | ID do vendedor/responsável | `user-uuid-1` |
 | `channelId` | string | ❌ | ID do canal | `whatsapp` |
+| `stepId` | string | ❌ | ID da etapa/funil | `step-uuid-1` |
 | `page` | number | ❌ | Número da página | `1` |
 | `pageSize` | number | ❌ | Itens por página | `100` |
 
@@ -166,11 +167,16 @@ curl "http://localhost:3000/api/metrics/dashboard?panelId=panel-123&startDate=20
 ```typescript
 {
   id: string
-  name: string
+  title: string              // Nome do painel (usar este!)
+  name?: string              // Legado
   description?: string
+  key?: string               // Chave curta (ex: "MT")
+  companyId?: string
+  archived?: boolean
+  scope?: string             // "USER" | "COMPANY"
   steps?: Array<{
     id: string
-    title: string
+    title: string            // Nome da etapa
     phase: string
     position: number
   }>
@@ -508,7 +514,7 @@ queryClient.invalidateQueries(['cards'])
 
 ---
 
-**Versão:** 1.0.0  
-**Última Atualização:** Novembro 2024
+**Versão:** 1.1.0  
+**Última Atualização:** Dezembro 2024
 
 

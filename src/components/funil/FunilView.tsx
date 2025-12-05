@@ -3,10 +3,10 @@ import { Card, Title, BarChart as TremorBarChart } from '@tremor/react'
 import FunnelChart from '@/components/charts/FunnelChart'
 import { useCards } from '@/lib/api/queries'
 import { calculateFunnelMetrics } from '@/lib/utils/calculations'
-import { filterCardsByPeriod, filterCardsByUser, filterCardsByChannel } from '@/lib/utils/calculations'
+import { filterCardsByPeriod, filterCardsByUser, filterCardsByChannel, filterCardsByStep } from '@/lib/utils/calculations'
 import { formatCurrency, formatPercentage } from '@/lib/utils/format'
 import type { DashboardFilters } from '@/lib/api/helena-types'
-import type { Card } from '@/lib/api/helena-types'
+import type { Card as CardType } from '@/lib/api/helena-types'
 
 interface FunilViewProps {
   filters?: DashboardFilters
@@ -16,7 +16,7 @@ const FunilView = ({ filters }: FunilViewProps) => {
   const { data: cards = [], isLoading, isError } = useCards(filters)
 
   const filteredCards = useMemo(() => {
-    let filtered: Card[] = cards
+    let filtered: CardType[] = cards
 
     if (filters?.startDate || filters?.endDate) {
       filtered = filterCardsByPeriod(
@@ -32,6 +32,10 @@ const FunilView = ({ filters }: FunilViewProps) => {
 
     if (filters?.channelId) {
       filtered = filterCardsByChannel(filtered, filters.channelId)
+    }
+
+    if (filters?.stepId) {
+      filtered = filterCardsByStep(filtered, filters.stepId)
     }
 
     return filtered
