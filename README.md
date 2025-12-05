@@ -73,11 +73,14 @@ npm run deploy:hosting   # Deploy apenas do hosting
 Crie um arquivo `.env` na raiz do projeto:
 
 ```env
-# URL base da API Backend (intermediário)
-VITE_API_URL=http://localhost:3000
+# URL base da API Helena/flw.chat
+VITE_HELENA_API_URL=https://api.flw.chat
+
+# Token de autenticação permanente
+VITE_HELENA_API_TOKEN=pn_seu_token_aqui
 ```
 
-**⚠️ Importante:** O projeto agora usa um backend intermediário (`dashCRMAtendebot_back`) que gerencia a autenticação e comunicação com a API Helena. O token é obtido via login e armazenado no localStorage.
+**⚠️ Importante:** Em desenvolvimento, o Vite usa um proxy configurado em `vite.config.ts` para evitar problemas de CORS. Em produção, as variáveis são "baked in" durante o build.
 
 ### Proxy de Desenvolvimento
 
@@ -103,35 +106,26 @@ Isso permite que requisições para `/api/*` sejam redirecionadas para `https://
 ```
 dashCRMAtendebot_front/
 ├── src/
-│   ├── assets/             # Assets estáticos (logo, imagens)
 │   ├── components/          # Componentes React
-│   │   ├── auth/           # Componentes de autenticação
-│   │   │   └── ProtectedRoute.tsx
 │   │   ├── charts/         # Componentes de gráficos (Recharts)
-│   │   ├── dashboard/      # Componentes do dashboard
-│   │   │   ├── FiltersBar.tsx
-│   │   │   └── ...
-│   │   ├── funil/          # Visualização do funil de vendas
+│   │   ├── dashboard/     # Componentes do dashboard
+│   │   ├── funil/         # Visualização do funil de vendas
 │   │   ├── metrics/        # Componentes de métricas
 │   │   └── ui/             # Componentes base (Radix UI)
-│   ├── contexts/           # Contextos React
-│   │   └── AuthContext.tsx
 │   ├── lib/
 │   │   ├── api/            # Cliente API e queries
-│   │   │   ├── auth-client.ts    # Cliente de autenticação
-│   │   │   ├── crm-client.ts     # Cliente CRM (novo)
-│   │   │   ├── helena-types.ts   # Tipos TypeScript
-│   │   │   └── queries.ts        # React Query hooks
+│   │   │   ├── helena-client.ts
+│   │   │   ├── helena-types.ts
+│   │   │   └── queries.ts
 │   │   └── utils/          # Funções utilitárias
 │   │       ├── calculations.ts
 │   │       ├── format.ts
 │   │       ├── date.ts
 │   │       └── stage-mapping.ts
 │   ├── pages/              # Páginas da aplicação
-│   │   ├── LoginPage.tsx   # Tela de login
 │   │   ├── DashboardPage.tsx
 │   │   └── TestApiPage.tsx
-│   ├── App.tsx             # Componente principal (com rotas)
+│   ├── App.tsx             # Componente principal
 │   ├── main.tsx            # Entry point
 │   └── index.css           # Estilos globais
 ├── docs/                   # Documentação completa
@@ -143,12 +137,6 @@ dashCRMAtendebot_front/
 
 ## 🎯 Funcionalidades
 
-### Autenticação
-
-- **🔐 Tela de Login** - Login por telefone ou email
-- **🔒 Rotas Protegidas** - Acesso apenas para usuários autenticados
-- **🔑 JWT Authentication** - Integração com backend via Bearer Token
-
 ### Dashboard Principal
 
 - **📊 Funil de Vendas** - Visualização do funil com métricas por etapa
@@ -159,13 +147,11 @@ dashCRMAtendebot_front/
 - **⏱️ Comparações Temporais** - Comparação entre períodos
 - **📦 Análise de Produtos** - Distribuição por produtos
 
-### Filtros Avançados
+### Filtros
 
-- **📋 Painel** - Seleção de painel CRM (dinâmico por conta)
-- **📅 Período** - Hoje, Esta Semana, Este Mês, Este Ano
-- **🔄 Etapa/Funil** - Filtrar por etapa específica do funil
-- **👤 Vendedor** - Filtrar por responsável (exibe nomes, não IDs)
-- **📱 Canal** - Filtrar por canal de origem
+- **Período** - Filtro por data (início e fim)
+- **Vendedor** - Filtrar por responsável
+- **Canal** - Filtrar por canal de origem
 
 ### Recursos Técnicos
 
@@ -295,15 +281,12 @@ console.error('❌ [HelenaAPI] Erro:', { error })
 ## 📊 Status do Projeto
 
 - ✅ Dashboard funcional
-- ✅ Integração com Backend intermediário
-- ✅ Autenticação JWT implementada
-- ✅ Tela de Login (telefone/email)
+- ✅ Integração com API Helena
 - ✅ Métricas implementadas
-- ✅ Filtros avançados (painel, vendedor, etapa, canal, período)
+- ✅ Filtros funcionando
 - ✅ Deploy configurado (Railway)
-- ✅ Nomes amigáveis (painéis, vendedores, etapas)
-- ⏳ Exportação de dados (planejado)
-- ⏳ Notificações em tempo real (planejado)
+- ⏳ Backend intermediário (planejado)
+- ⏳ Autenticação JWT (planejado)
 
 ## 🤝 Contribuindo
 
@@ -327,6 +310,6 @@ Este projeto é privado e proprietário.
 
 **Desenvolvido com ❤️ para AtendeBot**
 
-**Versão:** 1.1.0  
-**Última atualização:** Dezembro 2024
+**Versão:** 1.0.0  
+**Última atualização:** Novembro 2024
 

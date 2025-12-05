@@ -1,5 +1,4 @@
 import type {
-  Panel,
   Card,
   PanelResponse,
   CardResponse,
@@ -7,24 +6,20 @@ import type {
   DashboardFilters,
 } from './helena-types'
 
-// URL base da API HelenaCRM - usar proxy em desenvolvimento para evitar CORS
+// URL base da API Backend
+// Em desenvolvimento usa proxy local, em produção usa a URL do backend no Railway
 const API_URL = import.meta.env.DEV 
   ? '/api' 
-  : (import.meta.env.VITE_HELENA_API_URL || 'https://api.flw.chat')
-const API_TOKEN = import.meta.env.VITE_HELENA_API_TOKEN
+  : import.meta.env.VITE_API_URL
 
-console.log('🔧 [HelenaAPI] Configuração inicializada:', {
+if (!API_URL) {
+  console.error('❌ VITE_API_URL não está configurada no .env')
+}
+
+console.log('🔧 [API] Configuração inicializada:', {
   apiUrl: API_URL,
   isDev: import.meta.env.DEV,
-  hasToken: !!API_TOKEN,
-  tokenPreview: API_TOKEN ? `${API_TOKEN.substring(0, 10)}...` : 'N/A',
 })
-
-if (!API_TOKEN) {
-  console.warn(
-    '⚠️ [HelenaAPI] VITE_HELENA_API_TOKEN não configurado. Configure no arquivo .env.local'
-  )
-}
 
 class HelenaAPIError extends Error {
   constructor(
@@ -53,20 +48,19 @@ const handleResponse = async <T>(response: Response): Promise<T> => {
   return response.json()
 }
 
-const fetchWithAuth = async <T>(
+const fetchApi = async <T>(
   endpoint: string,
   options: RequestInit = {}
 ): Promise<T> => {
-  if (!API_TOKEN) {
-    console.error('❌ [HelenaAPI] Token de autenticação não configurado')
-    throw new HelenaAPIError('Token de autenticação não configurado')
+  if (!API_URL) {
+    console.error('❌ [API] URL da API não configurada')
+    throw new HelenaAPIError('URL da API não configurada. Configure VITE_API_URL.')
   }
 
   const url = `${API_URL}${endpoint}`
   const headers = {
     'Content-Type': 'application/json',
     Accept: 'application/json',
-    Authorization: `Bearer ${API_TOKEN}`,
     ...options.headers,
   }
 
@@ -75,7 +69,7 @@ const fetchWithAuth = async <T>(
     headers,
   }
 
-  console.log(`🚀 [HelenaAPI] Fazendo requisição:`, {
+  console.log(`🚀 [API] Fazendo requisição:`, {
     method: options.method || 'GET',
     url,
     endpoint,
@@ -86,7 +80,7 @@ const fetchWithAuth = async <T>(
     const response = await fetch(url, config)
     const duration = Date.now() - startTime
 
-    console.log(`⏱️ [HelenaAPI] Resposta recebida em ${duration}ms:`, {
+    console.log(`⏱️ [API] Resposta recebida em ${duration}ms:`, {
       status: response.status,
       statusText: response.statusText,
       ok: response.ok,
@@ -95,20 +89,15 @@ const fetchWithAuth = async <T>(
 
     const data = await handleResponse<T>(response)
     
-    console.log(`✅ [HelenaAPI] Dados recebidos:`, {
+    console.log(`✅ [API] Dados recebidos:`, {
       endpoint,
       dataType: Array.isArray(data) ? 'array' : typeof data,
       dataLength: Array.isArray(data) ? data.length : 'N/A',
-      dataPreview: Array.isArray(data) 
-        ? data.slice(0, 3) 
-        : (typeof data === 'object' && data !== null 
-          ? Object.keys(data).slice(0, 5) 
-          : data),
     })
 
     return data
   } catch (error) {
-    console.error(`❌ [HelenaAPI] Erro na requisição:`, {
+    console.error(`❌ [API] Erro na requisição:`, {
       endpoint,
       error: error instanceof Error ? error.message : error,
       errorType: error instanceof HelenaAPIError ? 'HelenaAPIError' : 'NetworkError',
@@ -126,38 +115,38 @@ const fetchWithAuth = async <T>(
 export const helenaClient = {
   // Painéis
   async getPanels(): Promise<PanelResponse> {
-    console.log('📋 [HelenaAPI] Buscando painéis...')
-    const result = await fetchWithAuth<PanelResponse>('/crm/v1/panel')
-    console.log(`📋 [HelenaAPI] Painéis encontrados: ${result.items?.length || 0}`)
+    console.log('📋 [API] Buscando painéis...')
+    const result = await fetchApi<PanelResponse>('/crm/v1/panel')
+    console.log(`📋 [API] Painéis encontrados: ${result.items?.length || 0}`)
     return result
   },
 
   async getPanelById(panelId: string): Promise<any> {
-    console.log('📋 [HelenaAPI] Buscando painel completo...', panelId)
-    const result = await fetchWithAuth<any>(`/crm/v1/panel/${panelId}`)
-    console.log('📋 [HelenaAPI] Painel recebido:', result)
+    console.log('📋 [API] Buscando painel completo...', panelId)
+    const result = await fetchApi<any>(`/crm/v1/panel/${panelId}`)
+    console.log('📋 [API] Painel recebido:', result)
     return result
   },
 
   // Cards - precisa de panelId obrigatório
   async getCards(filters?: DashboardFilters): Promise<CardResponse> {
-    console.log('🎴 [HelenaAPI] Buscando cards...', { filters })
+    console.log('🎴 [API] Buscando cards...', { filters })
     const params = new URLSearchParams()
     
     // panelId é obrigatório
     if (filters?.panelId) {
       params.append('panelId', filters.panelId)
-      console.log('🎴 [HelenaAPI] Usando panelId do filtro:', filters.panelId)
+      console.log('🎴 [API] Usando panelId do filtro:', filters.panelId)
     } else {
       // Se não tiver panelId, buscar do primeiro painel disponível
-      console.log('🎴 [HelenaAPI] PanelId não fornecido, buscando primeiro painel...')
+      console.log('🎴 [API] PanelId não fornecido, buscando primeiro painel...')
       const panels = await this.getPanels()
       if (panels.items && panels.items.length > 0) {
         const firstPanelId = panels.items[0].id
         params.append('panelId', firstPanelId)
-        console.log('🎴 [HelenaAPI] Usando primeiro painel encontrado:', firstPanelId)
+        console.log('🎴 [API] Usando primeiro painel encontrado:', firstPanelId)
       } else {
-        console.error('❌ [HelenaAPI] Nenhum painel encontrado')
+        console.error('❌ [API] Nenhum painel encontrado')
         throw new HelenaAPIError('Nenhum painel encontrado. É necessário ter pelo menos um painel.')
       }
     }
@@ -178,14 +167,14 @@ export const helenaClient = {
     const queryString = params.toString()
     const endpoint = `/crm/v1/panel/card?${queryString}`
 
-    console.log('🎴 [HelenaAPI] Endpoint final:', endpoint)
-    const result = await fetchWithAuth<CardResponse>(endpoint)
-    console.log(`🎴 [HelenaAPI] Cards encontrados: ${result.items?.length || 0}`)
+    console.log('🎴 [API] Endpoint final:', endpoint)
+    const result = await fetchApi<CardResponse>(endpoint)
+    console.log(`🎴 [API] Cards encontrados: ${result.items?.length || 0}`)
     return result
   },
 
   async getCardById(cardId: string): Promise<Card> {
-    return fetchWithAuth<Card>(`/crm/v1/panel/card/${cardId}`)
+    return fetchApi<Card>(`/crm/v1/panel/card/${cardId}`)
   },
 
   // Contatos
@@ -204,21 +193,21 @@ export const helenaClient = {
     const queryString = params.toString()
     const endpoint = `/core/public/v1/contact${queryString ? `?${queryString}` : ''}`
 
-    return fetchWithAuth<ContactResponse>(endpoint)
+    return fetchApi<ContactResponse>(endpoint)
   },
 
   // Usuários/Vendedores - DESABILITADO: rota não existe na API
   // async getUsers(): Promise<UserResponse> {
-  //   return fetchWithAuth<UserResponse>('/core/public/v1/user')
+  //   return fetchApi<UserResponse>('/core/public/v1/user')
   // },
 
   // async getUserById(userId: string): Promise<User> {
-  //   return fetchWithAuth<User>(`/core/public/v1/user/${userId}`)
+  //   return fetchApi<User>(`/core/public/v1/user/${userId}`)
   // },
 
   // Canais - DESABILITADO: rota não existe na API
   // async getChannels(): Promise<{ items: Array<{ id: string; name: string }> }> {
-  //   return fetchWithAuth<{ items: Array<{ id: string; name: string }> }>(
+  //   return fetchApi<{ items: Array<{ id: string; name: string }> }>(
   //     '/chat/public/v1/channel'
   //   )
   // },

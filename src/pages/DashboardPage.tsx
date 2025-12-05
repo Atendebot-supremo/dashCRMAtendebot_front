@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect } from 'react'
 import DashboardLayout from '@/components/dashboard/DashboardLayout'
 import FiltersBar from '@/components/dashboard/FiltersBar'
 import FunilView from '@/components/funil/FunilView'
@@ -10,62 +10,34 @@ import TemporalComparison from '@/components/metrics/TemporalComparison'
 import ProductAnalysis from '@/components/metrics/ProductAnalysis'
 import { useCards, usePanels } from '@/lib/api/queries'
 import { updateStepMapping } from '@/lib/utils/stage-mapping'
+import { helenaClient } from '@/lib/api/helena-client'
 import type { DashboardFilters } from '@/lib/api/helena-types'
 
 const DashboardPage = () => {
-  const { data: panels = [] } = usePanels()
-  const firstPanelId = panels?.[0]?.id
+  const [filters, setFilters] = useState<DashboardFilters>({})
+  const { data: cards = [] } = useCards(filters)
+  const { data: panelsResponse } = usePanels()
   
-  // Inicializar filtros com o primeiro painel
-  const [filters, setFilters] = useState<DashboardFilters>({
-    panelId: firstPanelId,
-  })
-  
-  // Atualizar panelId quando os painéis carregarem
+  // Buscar informações completas do painel para mapear etapas
   useEffect(() => {
-    if (firstPanelId && !filters.panelId) {
-      setFilters(prev => ({ ...prev, panelId: firstPanelId }))
-    }
-  }, [firstPanelId, filters.panelId])
-  
-  // Obter o painel selecionado com seus steps
-  const selectedPanel = useMemo(() => {
-    if (!filters.panelId || panels.length === 0) return null
-    return panels.find(p => p.id === filters.panelId) || null
-  }, [panels, filters.panelId])
-  
-  // Atualizar mapeamento de etapas quando o painel selecionado mudar
-  useEffect(() => {
-    if (selectedPanel?.steps && Array.isArray(selectedPanel.steps) && selectedPanel.steps.length > 0) {
-      console.log('📋 [DashboardPage] Atualizando mapeamento de etapas do painel:', {
-        panelId: selectedPanel.id,
-        panelTitle: selectedPanel.title,
-        stepsCount: selectedPanel.steps.length,
-        steps: selectedPanel.steps.map(s => ({ id: s.id, title: s.title })),
-      })
-      updateStepMapping(selectedPanel.steps)
-    } else {
-      console.warn('⚠️ [DashboardPage] Painel sem steps:', {
-        panelId: filters.panelId,
-        panelTitle: selectedPanel?.title,
-        stepsAvailable: selectedPanel?.steps,
-      })
-    }
-  }, [selectedPanel, filters.panelId])
-  
-  const { data: cards = [] } = useCards(
-    filters.panelId 
-      ? {
-          panelId: filters.panelId,
-          startDate: filters.startDate,
-          endDate: filters.endDate,
-          userId: filters.userId,
-          channelId: filters.channelId,
-          stepId: filters.stepId,
+    const fetchPanelDetails = async () => {
+      if (panelsResponse?.items && panelsResponse.items.length > 0) {
+        try {
+          const firstPanel = panelsResponse.items[0]
+          const panelDetails = await helenaClient.getPanelById(firstPanel.id)
+          
+          // Se o painel tiver steps, atualizar o mapeamento
+          if (panelDetails?.steps && Array.isArray(panelDetails.steps)) {
+            updateStepMapping(panelDetails.steps)
+          }
+        } catch (error) {
+          console.error('Erro ao buscar detalhes do painel:', error)
         }
-      : undefined,
-    !!filters.panelId
-  )
+      }
+    }
+    
+    fetchPanelDetails()
+  }, [panelsResponse])
 
   // Log para debug - ver estrutura dos dados
   console.group('📊 [DashboardPage] Análise completa dos dados')
@@ -99,11 +71,7 @@ const DashboardPage = () => {
   return (
     <DashboardLayout>
       {/* Filtros */}
-      <FiltersBar 
-        filters={filters} 
-        panels={panels}
-        onFiltersChange={handleFiltersChange} 
-      />
+      <FiltersBar filters={filters} onFiltersChange={handleFiltersChange} />
 
       {/* Métricas de Conversão */}
       <ConversionMetrics filters={filters} />

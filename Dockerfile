@@ -15,14 +15,12 @@ RUN npm ci
 # Copiar código fonte
 COPY . .
 
-# Argumentos de build para variáveis de ambiente Vite
-# Estas variáveis são "baked in" no código durante o build
-ARG VITE_HELENA_API_URL
-ARG VITE_HELENA_API_TOKEN
+# Argumento de build para URL da API backend
+# Esta variável é "baked in" no código durante o build
+ARG VITE_API_URL
 
-# Definir variáveis de ambiente para o build
-ENV VITE_HELENA_API_URL=$VITE_HELENA_API_URL
-ENV VITE_HELENA_API_TOKEN=$VITE_HELENA_API_TOKEN
+# Definir variável de ambiente para o build
+ENV VITE_API_URL=$VITE_API_URL
 
 # Build da aplicação React + Vite
 RUN npm run build
