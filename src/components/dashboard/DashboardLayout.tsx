@@ -1,11 +1,19 @@
 import { ReactNode } from 'react'
-import { BarChart3 } from 'lucide-react'
+import { BarChart3, LogOut, User } from 'lucide-react'
+import { useAuth } from '@/contexts/AuthContext'
+import { Button } from '@/components/ui/button'
 
 interface DashboardLayoutProps {
   children: ReactNode
 }
 
 const DashboardLayout = ({ children }: DashboardLayoutProps) => {
+  const { user, logout } = useAuth()
+
+  const handleLogout = () => {
+    logout()
+  }
+
   return (
     <div className="min-h-screen bg-[#F5F5F5]">
       {/* Header - Similar ao AtendeBot */}
@@ -16,7 +24,21 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
             <h1 className="text-xl font-semibold text-gray-900">Dashboard CRM</h1>
           </div>
           <div className="flex items-center gap-4">
-            <span className="text-sm text-gray-600">Max Chip</span>
+            <div className="flex items-center gap-2">
+              <User className="h-4 w-4 text-gray-500" />
+              <span className="text-sm font-medium text-gray-700">
+                {user?.name || 'Usuário'}
+              </span>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleLogout}
+              className="text-gray-500 hover:text-gray-700"
+              aria-label="Sair"
+            >
+              <LogOut className="h-4 w-4" />
+            </Button>
           </div>
         </div>
       </header>

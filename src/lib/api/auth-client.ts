@@ -1,4 +1,8 @@
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000'
+const API_URL = import.meta.env.VITE_API_URL
+
+if (!API_URL) {
+  console.error('❌ VITE_API_URL não está configurada no .env')
+}
 
 export interface LoginRequest {
   phone?: string
