@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
-import { DollarSign, TrendingUp, Users } from 'lucide-react'
+import { DollarSign, TrendingUp, Users, BarChart3, PieChart } from 'lucide-react'
 import TremorMetricCard from '@/components/dashboard/TremorMetricCard'
-import { Card, Title, BarChart as TremorBarChart } from '@tremor/react'
+import ChartCard from '@/components/dashboard/ChartCard'
 import { useCards } from '@/lib/api/queries'
 import { calculateRevenueMetrics } from '@/lib/utils/calculations'
 import {
@@ -66,9 +66,9 @@ const RevenueMetrics = ({ filters }: RevenueMetricsProps) => {
   if (isLoading) {
     return (
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        <div className="h-[140px] animate-pulse rounded-lg bg-gray-200" />
-        <div className="h-[140px] animate-pulse rounded-lg bg-gray-200" />
-        <div className="h-[140px] animate-pulse rounded-lg bg-gray-200" />
+        <div className="h-[140px] animate-pulse rounded-xl bg-gray-800/50 border border-gray-700/50" />
+        <div className="h-[140px] animate-pulse rounded-xl bg-gray-800/50 border border-gray-700/50" />
+        <div className="h-[140px] animate-pulse rounded-xl bg-gray-800/50 border border-gray-700/50" />
       </div>
     )
   }
@@ -76,7 +76,10 @@ const RevenueMetrics = ({ filters }: RevenueMetricsProps) => {
   if (isError) {
     return (
       <div className="text-center py-8">
-        <p className="text-red-600">Erro ao carregar métricas de receita</p>
+        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-red-500/10 border border-red-500/20">
+          <DollarSign className="h-4 w-4 text-red-400" />
+          <p className="text-red-400 text-sm font-medium">Erro ao carregar métricas de receita</p>
+        </div>
       </div>
     )
   }
@@ -109,35 +112,46 @@ const RevenueMetrics = ({ filters }: RevenueMetricsProps) => {
 
       {/* Gráficos */}
       {sellerChartData.length > 0 && (
-        <Card>
-          <Title>Receita por Vendedor</Title>
-          <TremorBarChart
-            className="mt-6"
-            data={sellerChartData}
-            index="name"
-            categories={['value']}
-            colors={['blue']}
-            yAxisWidth={60}
-          />
-        </Card>
+        <ChartCard 
+          title="Receita por Vendedor"
+          icon={<BarChart3 className="h-4 w-4 text-[#c8fa00]" />}
+        >
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+            {sellerChartData.map((item, index) => (
+              <div 
+                key={index}
+                className="group relative p-4 rounded-xl bg-gray-700/30 border border-gray-600/30 hover:border-[#c8fa00]/30 transition-all duration-300"
+              >
+                <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-[#c8fa00]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                <p className="text-xs text-gray-400 truncate mb-2">{item.name}</p>
+                <p className="text-lg font-bold text-white">{formatCurrency(item.value)}</p>
+              </div>
+            ))}
+          </div>
+        </ChartCard>
       )}
 
       {channelChartData.length > 0 && (
-        <Card>
-          <Title>Receita por Canal</Title>
-          <TremorBarChart
-            className="mt-6"
-            data={channelChartData}
-            index="name"
-            categories={['value']}
-            colors={['green']}
-            yAxisWidth={60}
-          />
-        </Card>
+        <ChartCard 
+          title="Receita por Canal"
+          icon={<PieChart className="h-4 w-4 text-[#c8fa00]" />}
+        >
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+            {channelChartData.map((item, index) => (
+              <div 
+                key={index}
+                className="group relative p-4 rounded-xl bg-gray-700/30 border border-gray-600/30 hover:border-emerald-500/30 transition-all duration-300"
+              >
+                <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-emerald-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                <p className="text-xs text-gray-400 truncate mb-2">{item.name}</p>
+                <p className="text-lg font-bold text-white">{formatCurrency(item.value)}</p>
+              </div>
+            ))}
+          </div>
+        </ChartCard>
       )}
     </div>
   )
 }
 
 export default RevenueMetrics
-

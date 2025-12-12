@@ -27,41 +27,49 @@ const BarChart = ({
   height = 300,
 }: BarChartProps) => {
   const colors = [
-    'hsl(var(--chart-1))',
-    'hsl(var(--chart-2))',
-    'hsl(var(--chart-3))',
-    'hsl(var(--chart-4))',
-    'hsl(var(--chart-5))',
+    '#c8fa00',
+    '#10b981',
+    '#3b82f6',
+    '#8b5cf6',
+    '#f59e0b',
   ]
 
   return (
     <ResponsiveContainer width="100%" height={height}>
       <RechartsBarChart data={data}>
-        <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+        <CartesianGrid strokeDasharray="3 3" stroke="#374151" strokeOpacity={0.5} />
         <XAxis
           dataKey={xAxisKey}
-          className="text-xs"
-          tick={{ fill: 'hsl(var(--muted-foreground))' }}
+          tick={{ fill: '#9ca3af', fontSize: 12 }}
+          axisLine={{ stroke: '#4b5563' }}
+          tickLine={{ stroke: '#4b5563' }}
         />
         <YAxis
-          className="text-xs"
-          tick={{ fill: 'hsl(var(--muted-foreground))' }}
+          tick={{ fill: '#9ca3af', fontSize: 12 }}
+          axisLine={{ stroke: '#4b5563' }}
+          tickLine={{ stroke: '#4b5563' }}
         />
         <Tooltip
           contentStyle={{
-            backgroundColor: 'hsl(var(--popover))',
-            border: '1px solid hsl(var(--border))',
-            borderRadius: 'calc(var(--radius) - 2px)',
+            backgroundColor: '#1f2937',
+            border: '1px solid #374151',
+            borderRadius: '12px',
+            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
           }}
+          labelStyle={{ color: '#f9fafb', fontWeight: 600 }}
+          itemStyle={{ color: '#d1d5db' }}
         />
-        <Legend />
+        <Legend 
+          wrapperStyle={{ color: '#9ca3af' }}
+          formatter={(value) => <span style={{ color: '#d1d5db' }}>{value}</span>}
+        />
         {bars.map((bar, index) => (
           <Bar
             key={bar.key}
             dataKey={bar.key}
             name={bar.name}
             fill={bar.color || colors[index % colors.length]}
-            radius={[4, 4, 0, 0]}
+            radius={[6, 6, 0, 0]}
           />
         ))}
       </RechartsBarChart>
@@ -70,4 +78,3 @@ const BarChart = ({
 }
 
 export default BarChart
-

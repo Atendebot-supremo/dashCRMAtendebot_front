@@ -47,9 +47,9 @@ const ConversionMetrics = ({ filters }: ConversionMetricsProps) => {
   if (isLoading) {
     return (
       <div className="grid gap-4 md:grid-cols-3">
-        <div className="h-[140px] animate-pulse rounded-lg bg-gray-200" />
-        <div className="h-[140px] animate-pulse rounded-lg bg-gray-200" />
-        <div className="h-[140px] animate-pulse rounded-lg bg-gray-200" />
+        <div className="h-[140px] animate-pulse rounded-xl bg-gray-800/50 border border-gray-700/50" />
+        <div className="h-[140px] animate-pulse rounded-xl bg-gray-800/50 border border-gray-700/50" />
+        <div className="h-[140px] animate-pulse rounded-xl bg-gray-800/50 border border-gray-700/50" />
       </div>
     )
   }
@@ -57,9 +57,12 @@ const ConversionMetrics = ({ filters }: ConversionMetricsProps) => {
   if (isError) {
     return (
       <div className="text-center py-8">
-        <p className="text-red-600">
-          Erro ao carregar métricas de conversão
-        </p>
+        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-red-500/10 border border-red-500/20">
+          <Target className="h-4 w-4 text-red-400" />
+          <p className="text-red-400 text-sm font-medium">
+            Erro ao carregar métricas de conversão
+          </p>
+        </div>
       </div>
     )
   }
@@ -89,4 +92,3 @@ const ConversionMetrics = ({ filters }: ConversionMetricsProps) => {
 }
 
 export default ConversionMetrics
-

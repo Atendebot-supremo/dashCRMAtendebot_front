@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { Calendar } from 'lucide-react'
+import { Calendar, Filter, RotateCcw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   Select,
@@ -8,7 +8,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Card, CardContent } from '@/components/ui/card'
 import { useCards } from '@/lib/api/queries'
 import { extractUniqueResponsibles, extractUniqueChannels } from '@/lib/utils/stage-mapping'
 import type { DashboardFilters } from '@/types/crm'
@@ -77,86 +76,107 @@ const FiltersBar = ({ filters, onFiltersChange }: FiltersBarProps) => {
   }
 
   return (
-    <Card className="bg-white shadow-sm">
-      <CardContent className="pt-6">
-        <div className="flex flex-wrap items-center gap-4">
-          {/* Período */}
-          <div className="flex items-center gap-2">
-            <Calendar className="h-4 w-4 text-muted-foreground" />
-            <Select
-              onValueChange={handlePeriodChange}
-              defaultValue="month"
-            >
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Período" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="today">Hoje</SelectItem>
-                <SelectItem value="week">Esta Semana</SelectItem>
-                <SelectItem value="month">Este Mês</SelectItem>
-                <SelectItem value="year">Este Ano</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Usuário/Vendedor */}
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground">Vendedor:</span>
-            <Select
-              value={filters.userId || 'all'}
-              onValueChange={handleUserChange}
-              disabled={usersLoading}
-            >
-              <SelectTrigger className="w-[200px]">
-                <SelectValue placeholder="Todos os vendedores" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos os vendedores</SelectItem>
-                {users.map((user) => (
-                  <SelectItem key={user.id} value={user.id}>
-                    {user.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Canal */}
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground">Canal:</span>
-            <Select
-              value={filters.channelId || 'all'}
-              onValueChange={handleChannelChange}
-              disabled={channelsLoading}
-            >
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Todos os canais" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos os canais</SelectItem>
-                {channels.map((channel) => (
-                  <SelectItem key={channel.id} value={channel.id}>
-                    {channel.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Reset */}
-          <Button
-            variant="outline"
-            onClick={() => {
-              onFiltersChange({})
-            }}
-          >
-            Limpar Filtros
-          </Button>
+    <div className="rounded-xl border border-gray-700/50 bg-gray-800/80 backdrop-blur-xl shadow-xl shadow-black/10 p-6">
+      {/* Header */}
+      <div className="flex items-center gap-3 mb-5">
+        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#c8fa00]/10">
+          <Filter className="h-4 w-4 text-[#c8fa00]" />
         </div>
-      </CardContent>
-    </Card>
+        <div>
+          <h3 className="text-sm font-semibold text-white">Filtros</h3>
+          <p className="text-xs text-gray-500">Refine sua visualização</p>
+        </div>
+      </div>
+
+      {/* Filters Grid */}
+      <div className="flex flex-wrap items-center gap-4">
+        {/* Período */}
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-700/30">
+            <Calendar className="h-4 w-4 text-[#c8fa00]" />
+            <span className="text-xs font-medium text-gray-400">Período</span>
+          </div>
+          <Select
+            onValueChange={handlePeriodChange}
+            defaultValue="month"
+          >
+            <SelectTrigger className="w-[160px] h-10 bg-gray-700/50 border-gray-600/50 text-white hover:bg-gray-700/70 focus:border-[#c8fa00] focus:ring-[#c8fa00]/20 transition-all">
+              <SelectValue placeholder="Período" />
+            </SelectTrigger>
+            <SelectContent className="bg-gray-800 border-gray-700 text-white">
+              <SelectItem value="today" className="hover:bg-gray-700 focus:bg-gray-700 focus:text-white">Hoje</SelectItem>
+              <SelectItem value="week" className="hover:bg-gray-700 focus:bg-gray-700 focus:text-white">Esta Semana</SelectItem>
+              <SelectItem value="month" className="hover:bg-gray-700 focus:bg-gray-700 focus:text-white">Este Mês</SelectItem>
+              <SelectItem value="year" className="hover:bg-gray-700 focus:bg-gray-700 focus:text-white">Este Ano</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Divisor */}
+        <div className="h-8 w-px bg-gray-700/50 hidden md:block" />
+
+        {/* Usuário/Vendedor */}
+        <div className="flex items-center gap-3">
+          <span className="text-xs font-medium text-gray-400">Vendedor:</span>
+          <Select
+            value={filters.userId || 'all'}
+            onValueChange={handleUserChange}
+            disabled={usersLoading}
+          >
+            <SelectTrigger className="w-[180px] h-10 bg-gray-700/50 border-gray-600/50 text-white hover:bg-gray-700/70 focus:border-[#c8fa00] focus:ring-[#c8fa00]/20 transition-all">
+              <SelectValue placeholder="Todos os vendedores" />
+            </SelectTrigger>
+            <SelectContent className="bg-gray-800 border-gray-700 text-white">
+              <SelectItem value="all" className="hover:bg-gray-700 focus:bg-gray-700 focus:text-white">Todos os vendedores</SelectItem>
+              {users.map((user) => (
+                <SelectItem key={user.id} value={user.id} className="hover:bg-gray-700 focus:bg-gray-700 focus:text-white">
+                  {user.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Divisor */}
+        <div className="h-8 w-px bg-gray-700/50 hidden md:block" />
+
+        {/* Canal */}
+        <div className="flex items-center gap-3">
+          <span className="text-xs font-medium text-gray-400">Canal:</span>
+          <Select
+            value={filters.channelId || 'all'}
+            onValueChange={handleChannelChange}
+            disabled={channelsLoading}
+          >
+            <SelectTrigger className="w-[160px] h-10 bg-gray-700/50 border-gray-600/50 text-white hover:bg-gray-700/70 focus:border-[#c8fa00] focus:ring-[#c8fa00]/20 transition-all">
+              <SelectValue placeholder="Todos os canais" />
+            </SelectTrigger>
+            <SelectContent className="bg-gray-800 border-gray-700 text-white">
+              <SelectItem value="all" className="hover:bg-gray-700 focus:bg-gray-700 focus:text-white">Todos os canais</SelectItem>
+              {channels.map((channel) => (
+                <SelectItem key={channel.id} value={channel.id} className="hover:bg-gray-700 focus:bg-gray-700 focus:text-white">
+                  {channel.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Spacer */}
+        <div className="flex-1" />
+
+        {/* Reset */}
+        <Button
+          variant="outline"
+          onClick={() => onFiltersChange({})}
+          className="h-10 bg-transparent border-gray-600/50 text-gray-300 hover:bg-gray-700/50 hover:text-white hover:border-gray-500 transition-all"
+        >
+          <RotateCcw className="h-4 w-4 mr-2" />
+          Limpar Filtros
+        </Button>
+      </div>
+    </div>
   )
 }
 
 export default FiltersBar
-

@@ -17,11 +17,14 @@ interface PieChartProps {
 
 const PieChart = ({ data, height = 300 }: PieChartProps) => {
   const colors = [
-    'hsl(var(--chart-1))',
-    'hsl(var(--chart-2))',
-    'hsl(var(--chart-3))',
-    'hsl(var(--chart-4))',
-    'hsl(var(--chart-5))',
+    '#c8fa00',
+    '#10b981',
+    '#3b82f6',
+    '#8b5cf6',
+    '#f59e0b',
+    '#ef4444',
+    '#06b6d4',
+    '#ec4899',
   ]
 
   return (
@@ -31,13 +34,16 @@ const PieChart = ({ data, height = 300 }: PieChartProps) => {
           data={data}
           cx="50%"
           cy="50%"
-          labelLine={false}
-          label={({ name, percent }) =>
+          labelLine={{ stroke: '#6b7280' }}
+          label={({ name, percent }) => (
             `${name}: ${(percent * 100).toFixed(0)}%`
-          }
-          outerRadius={80}
+          )}
+          outerRadius={100}
+          innerRadius={60}
           fill="#8884d8"
           dataKey="value"
+          stroke="#1f2937"
+          strokeWidth={2}
         >
           {data.map((entry, index) => (
             <Cell
@@ -48,16 +54,21 @@ const PieChart = ({ data, height = 300 }: PieChartProps) => {
         </Pie>
         <Tooltip
           contentStyle={{
-            backgroundColor: 'hsl(var(--popover))',
-            border: '1px solid hsl(var(--border))',
-            borderRadius: 'calc(var(--radius) - 2px)',
+            backgroundColor: '#1f2937',
+            border: '1px solid #374151',
+            borderRadius: '12px',
+            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
           }}
+          labelStyle={{ color: '#f9fafb', fontWeight: 600 }}
+          itemStyle={{ color: '#d1d5db' }}
         />
-        <Legend />
+        <Legend 
+          wrapperStyle={{ color: '#9ca3af' }}
+          formatter={(value) => <span style={{ color: '#d1d5db' }}>{value}</span>}
+        />
       </RechartsPieChart>
     </ResponsiveContainer>
   )
 }
 
 export default PieChart
-

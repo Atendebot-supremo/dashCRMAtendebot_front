@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
-import { Card, Title, BarChart as TremorBarChart } from '@tremor/react'
+import { TrendingUp, BarChart3, TableIcon } from 'lucide-react'
 import FunnelChart from '@/components/charts/FunnelChart'
+import ChartCard from '@/components/dashboard/ChartCard'
 import { useCards } from '@/lib/api/queries'
 import { calculateFunnelMetrics } from '@/lib/utils/calculations'
 import { filterCardsByPeriod, filterCardsByUser, filterCardsByChannel } from '@/lib/utils/calculations'
@@ -59,88 +60,111 @@ const FunilView = ({ filters }: FunilViewProps) => {
   if (isLoading) {
     return (
       <div className="space-y-4">
-        <div className="h-[400px] animate-pulse rounded-lg bg-gray-200" />
-        <div className="h-[300px] animate-pulse rounded-lg bg-gray-200" />
+        <div className="h-[400px] animate-pulse rounded-xl bg-gray-800/50 border border-gray-700/50" />
+        <div className="h-[300px] animate-pulse rounded-xl bg-gray-800/50 border border-gray-700/50" />
       </div>
     )
   }
 
   if (isError) {
     return (
-      <Card className="text-center py-8">
-        <p className="text-red-600">Erro ao carregar dados do funil</p>
-      </Card>
+      <ChartCard title="Funil de Vendas" className="text-center py-12">
+        <div className="flex flex-col items-center gap-3">
+          <div className="h-12 w-12 rounded-full bg-red-500/10 flex items-center justify-center">
+            <TrendingUp className="h-6 w-6 text-red-400" />
+          </div>
+          <p className="text-red-400 font-medium">Erro ao carregar dados do funil</p>
+        </div>
+      </ChartCard>
     )
   }
 
   if (funnelMetrics.length === 0) {
     return (
-      <Card className="text-center py-8">
-        <p className="text-gray-600">Nenhum dado disponível</p>
-      </Card>
+      <ChartCard title="Funil de Vendas" className="text-center py-12">
+        <div className="flex flex-col items-center gap-3">
+          <div className="h-12 w-12 rounded-full bg-gray-700/50 flex items-center justify-center">
+            <TrendingUp className="h-6 w-6 text-gray-500" />
+          </div>
+          <p className="text-gray-400">Nenhum dado disponível</p>
+        </div>
+      </ChartCard>
     )
   }
 
   return (
     <div className="space-y-6">
       {/* Gráfico de Funil */}
-      <Card>
-        <Title>Funil de Vendas - Quantidade de Leads por Etapa</Title>
-        <div className="mt-6">
+      <ChartCard 
+        title="Funil de Vendas - Quantidade de Leads por Etapa"
+        icon={<TrendingUp className="h-4 w-4 text-[#c8fa00]" />}
+      >
+        <div className="mt-2">
           <FunnelChart data={chartData} height={400} />
         </div>
-      </Card>
+      </ChartCard>
 
       {/* Gráfico de Valores */}
-      <Card>
-        <Title>Valor em Reais por Etapa</Title>
-        <TremorBarChart
-          className="mt-6"
-          data={valueChartData}
-          index="name"
-          categories={['value']}
-          colors={['blue']}
-          yAxisWidth={60}
-        />
-      </Card>
+      <ChartCard 
+        title="Valor em Reais por Etapa"
+        icon={<BarChart3 className="h-4 w-4 text-[#c8fa00]" />}
+      >
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+          {valueChartData.map((item, index) => (
+            <div 
+              key={index}
+              className="group relative p-4 rounded-xl bg-gray-700/30 border border-gray-600/30 hover:border-[#c8fa00]/30 transition-all duration-300"
+            >
+              <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-[#c8fa00]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+              <p className="text-xs text-gray-400 truncate mb-2">{item.name}</p>
+              <p className="text-lg font-bold text-white">{formatCurrency(item.value)}</p>
+            </div>
+          ))}
+        </div>
+      </ChartCard>
 
       {/* Tabela de Métricas */}
-      <Card>
-        <Title>Métricas Detalhadas por Etapa</Title>
-        <div className="mt-6 overflow-x-auto">
-          <table className="w-full text-sm border-collapse">
-            <thead className="bg-gray-50">
-              <tr className="border-b-2 border-gray-200">
-                <th className="text-left p-3 font-semibold text-gray-700">Etapa</th>
-                <th className="text-right p-3 font-semibold text-gray-700">Leads</th>
-                <th className="text-right p-3 font-semibold text-gray-700">Valor Total</th>
-                <th className="text-right p-3 font-semibold text-gray-700">Taxa de Conversão</th>
-                <th className="text-right p-3 font-semibold text-gray-700">Tempo Médio</th>
+      <ChartCard 
+        title="Métricas Detalhadas por Etapa"
+        icon={<TableIcon className="h-4 w-4 text-[#c8fa00]" />}
+      >
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-gray-700/50">
+                <th className="text-left p-4 font-semibold text-gray-300">Etapa</th>
+                <th className="text-right p-4 font-semibold text-gray-300">Leads</th>
+                <th className="text-right p-4 font-semibold text-gray-300">Valor Total</th>
+                <th className="text-right p-4 font-semibold text-gray-300">Taxa de Conversão</th>
+                <th className="text-right p-4 font-semibold text-gray-300">Tempo Médio</th>
               </tr>
             </thead>
-            <tbody className="bg-white">
+            <tbody>
               {funnelMetrics.map((metric, index) => (
-                <tr key={index} className="border-b border-gray-200 hover:bg-blue-50 transition-colors">
-                  <td className="p-3">
-                    <div className="flex items-center gap-2">
-                      <div className="w-3 h-3 rounded-full bg-blue-500"></div>
-                      <span className="font-medium text-gray-900">{metric.stage}</span>
+                <tr 
+                  key={index} 
+                  className="border-b border-gray-700/30 hover:bg-gray-700/30 transition-colors"
+                >
+                  <td className="p-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-3 h-3 rounded-full bg-gradient-to-br from-[#c8fa00] to-[#a8d600] shadow-sm shadow-[#c8fa00]/20" />
+                      <span className="font-medium text-white">{metric.stage}</span>
                     </div>
                   </td>
-                  <td className="p-3 text-right">
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                  <td className="p-4 text-right">
+                    <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-[#c8fa00]/10 text-[#c8fa00] border border-[#c8fa00]/20">
                       {metric.leads}
                     </span>
                   </td>
-                  <td className="p-3 text-right font-semibold text-gray-900">
+                  <td className="p-4 text-right font-semibold text-white">
                     {formatCurrency(metric.value)}
                   </td>
-                  <td className="p-3 text-right">
-                    <span className={`font-medium ${metric.conversionRate >= 50 ? 'text-green-600' : 'text-yellow-600'}`}>
+                  <td className="p-4 text-right">
+                    <span className={`font-medium ${metric.conversionRate >= 50 ? 'text-emerald-400' : 'text-amber-400'}`}>
                       {formatPercentage(metric.conversionRate)}
                     </span>
                   </td>
-                  <td className="p-3 text-right text-gray-600">
+                  <td className="p-4 text-right text-gray-400">
                     {metric.averageTime.toFixed(1)} dias
                   </td>
                 </tr>
@@ -148,10 +172,9 @@ const FunilView = ({ filters }: FunilViewProps) => {
             </tbody>
           </table>
         </div>
-      </Card>
+      </ChartCard>
     </div>
   )
 }
 
 export default FunilView
-
