@@ -8,8 +8,8 @@ import type {
   GetCardsParams,
 } from '@/types/crm'
 
-// URL base da API Backend
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
+// URL base da API Backend (SEM /api no final)
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000'
 
 console.log('🔧 [API] Configuração inicializada:', {
   apiUrl: API_URL,
@@ -155,7 +155,7 @@ export const helenaClient = {
    */
   async getPanels(): Promise<ListData<Panel>> {
     console.log('📋 [API] Buscando painéis...')
-    const result = await fetchWithAuth<ListData<Panel>>('/crm/panels')
+    const result = await fetchWithAuth<ListData<Panel>>('/api/crm/panels')
     console.log(`📋 [API] Painéis encontrados: ${result.items?.length || 0}`)
     return result
   },
@@ -166,7 +166,7 @@ export const helenaClient = {
    */
   async getPanelById(panelId: string): Promise<Panel> {
     console.log('📋 [API] Buscando painel:', panelId)
-    const result = await fetchWithAuth<Panel>(`/crm/panels/${panelId}`)
+    const result = await fetchWithAuth<Panel>(`/api/crm/panels/${panelId}`)
     console.log('📋 [API] Painel recebido:', result.name)
     return result
   },
@@ -195,7 +195,7 @@ export const helenaClient = {
     if (params.page) queryParams.append('page', String(params.page))
     if (params.pageSize) queryParams.append('pageSize', String(params.pageSize))
 
-    const endpoint = `/crm/cards?${queryParams.toString()}`
+    const endpoint = `/api/crm/cards?${queryParams.toString()}`
     const result = await fetchWithAuth<PaginatedData<Card>>(endpoint)
     
     console.log(`🎴 [API] Cards encontrados: ${result.items?.length || 0}`)
@@ -208,7 +208,7 @@ export const helenaClient = {
    */
   async getCardById(cardId: string): Promise<Card> {
     console.log('🎴 [API] Buscando card:', cardId)
-    const result = await fetchWithAuth<Card>(`/crm/cards/${cardId}`)
+    const result = await fetchWithAuth<Card>(`/api/crm/cards/${cardId}`)
     console.log('🎴 [API] Card recebido:', result.title)
     return result
   },
@@ -224,7 +224,7 @@ export const helenaClient = {
   async getAgents(panelId: string): Promise<ListData<Agent>> {
     console.log('👥 [API] Buscando agentes...')
     const params = new URLSearchParams({ panelId })
-    const result = await fetchWithAuth<ListData<Agent>>(`/crm/agents?${params}`)
+    const result = await fetchWithAuth<ListData<Agent>>(`/api/crm/agents?${params}`)
     console.log(`👥 [API] Agentes encontrados: ${result.items?.length || 0}`)
     return result
   },
@@ -235,7 +235,7 @@ export const helenaClient = {
    */
   async getAgentById(agentId: string): Promise<Agent> {
     console.log('👥 [API] Buscando agente:', agentId)
-    const result = await fetchWithAuth<Agent>(`/crm/agents/${agentId}`)
+    const result = await fetchWithAuth<Agent>(`/api/crm/agents/${agentId}`)
     console.log('👥 [API] Agente recebido:', result.name)
     return result
   },

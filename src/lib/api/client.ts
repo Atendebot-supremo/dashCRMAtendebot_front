@@ -1,5 +1,5 @@
-// URL base da API Backend
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
+// URL base da API Backend (SEM /api no final)
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000'
 
 if (!API_URL) {
   console.error('❌ VITE_API_URL não está configurada no .env')
@@ -163,16 +163,16 @@ export const apiClient = {
 
   // Buscar dados completos do usuário (incluindo userName e email)
   async getUserProfile() {
-    return fetchWithAuth<{ success: boolean; data: { id: string; name: string; phone: string; userName?: string; email?: string } }>('/auth/profile')
+    return fetchWithAuth<{ success: boolean; data: { id: string; name: string; phone: string; userName?: string; email?: string } }>('/api/auth/profile')
   },
 
   // CRM - Painéis
   async getPanels() {
-    return fetchWithAuth('/crm/panels')
+    return fetchWithAuth('/api/crm/panels')
   },
 
   async getPanelById(panelId: string) {
-    return fetchWithAuth(`/crm/panels/${panelId}`)
+    return fetchWithAuth(`/api/crm/panels/${panelId}`)
   },
 
   // CRM - Cards
@@ -184,20 +184,20 @@ export const apiClient = {
       })
     }
     const queryString = params.toString()
-    return fetchWithAuth(`/crm/cards${queryString ? `?${queryString}` : ''}`)
+    return fetchWithAuth(`/api/crm/cards${queryString ? `?${queryString}` : ''}`)
   },
 
   async getCardById(cardId: string) {
-    return fetchWithAuth(`/crm/cards/${cardId}`)
+    return fetchWithAuth(`/api/crm/cards/${cardId}`)
   },
 
   // CRM - Agentes
   async getAgents() {
-    return fetchWithAuth('/crm/agents')
+    return fetchWithAuth('/api/crm/agents')
   },
 
   async getAgentById(agentId: string) {
-    return fetchWithAuth(`/crm/agents/${agentId}`)
+    return fetchWithAuth(`/api/crm/agents/${agentId}`)
   },
 
   // Métricas
@@ -212,7 +212,7 @@ export const apiClient = {
     Object.entries(filters).forEach(([key, value]) => {
       if (value) params.append(key, value)
     })
-    return fetchWithAuth(`/metrics/funnel?${params.toString()}`)
+    return fetchWithAuth(`/api/metrics/funnel?${params.toString()}`)
   },
 
   async getRevenueMetrics(filters: {
@@ -226,7 +226,7 @@ export const apiClient = {
     Object.entries(filters).forEach(([key, value]) => {
       if (value) params.append(key, value)
     })
-    return fetchWithAuth(`/metrics/revenue?${params.toString()}`)
+    return fetchWithAuth(`/api/metrics/revenue?${params.toString()}`)
   },
 
   async getConversionMetrics(filters: {
@@ -238,7 +238,7 @@ export const apiClient = {
     Object.entries(filters).forEach(([key, value]) => {
       if (value) params.append(key, value)
     })
-    return fetchWithAuth(`/metrics/conversion?${params.toString()}`)
+    return fetchWithAuth(`/api/metrics/conversion?${params.toString()}`)
   },
 
   async getDashboard(filters: {
@@ -252,6 +252,6 @@ export const apiClient = {
     Object.entries(filters).forEach(([key, value]) => {
       if (value) params.append(key, value)
     })
-    return fetchWithAuth(`/metrics/dashboard?${params.toString()}`)
+    return fetchWithAuth(`/api/metrics/dashboard?${params.toString()}`)
   },
 }
