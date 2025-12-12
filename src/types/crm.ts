@@ -122,6 +122,8 @@ export interface AuthUser {
   id: string
   name: string
   phone: string
+  userName?: string
+  email?: string
 }
 
 export interface HelenaData {

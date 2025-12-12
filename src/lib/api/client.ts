@@ -21,11 +21,16 @@ export interface LoginResponse {
       accessToken: string
       userId: string
       tenantId: string
+      expiresIn?: string
+      refreshToken?: string
+      urlRedirect?: string
     }
     user: {
       id: string
       name: string
       phone: string
+      userName?: string
+      email?: string
     }
   }
   message: string
@@ -131,8 +136,9 @@ export const apiClient = {
     // Salvar token e dados do usuário
     if (data.success && data.data?.token) {
       localStorage.setItem('auth_token', data.data.token)
+      // Salvar dados completos do usuário (incluindo username e companyName se disponíveis)
       localStorage.setItem('user_data', JSON.stringify(data.data.user))
-      console.log('✅ [Login] Sucesso! Token salvo.')
+      console.log('✅ [Login] Sucesso! Token salvo.', { user: data.data.user })
     }
 
     return data as LoginResponse
@@ -153,6 +159,11 @@ export const apiClient = {
   getUserData() {
     const userData = localStorage.getItem('user_data')
     return userData ? JSON.parse(userData) : null
+  },
+
+  // Buscar dados completos do usuário (incluindo userName e email)
+  async getUserProfile() {
+    return fetchWithAuth<{ success: boolean; data: { id: string; name: string; phone: string; userName?: string; email?: string } }>('/auth/profile')
   },
 
   // CRM - Painéis

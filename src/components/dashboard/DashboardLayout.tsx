@@ -16,6 +16,20 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
     const userData = apiClient.getUserData()
     if (userData) {
       setUser(userData)
+      
+      // Tentar buscar dados completos do perfil (userName e email)
+      apiClient.getUserProfile()
+        .then((response) => {
+          if (response.success && response.data) {
+            setUser(response.data)
+            // Atualizar localStorage com dados completos
+            localStorage.setItem('user_data', JSON.stringify(response.data))
+          }
+        })
+        .catch((error) => {
+          // Se não houver endpoint ou falhar, usar dados do localStorage
+          console.log('Perfil completo não disponível, usando dados do login:', error)
+        })
     }
   }, [])
 
@@ -66,9 +80,11 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
               </div>
               <div className="text-left hidden sm:block">
                 <span className="font-medium text-white block">
-                  {user?.name || 'Usuário'}
+                  {user?.userName || user?.name || 'Usuário'}
                 </span>
-                <span className="text-xs text-gray-500">Administrador</span>
+                <span className="text-xs text-gray-500">
+                  {user?.name || 'Administrador'}
+                </span>
               </div>
               <ChevronDown className={`h-4 w-4 text-gray-400 transition-transform duration-200 ${showMenu ? 'rotate-180' : ''}`} />
             </button>
@@ -77,8 +93,12 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
             {showMenu && (
               <div className="absolute right-0 top-full mt-2 w-56 rounded-xl border border-gray-700/50 bg-gray-800/95 backdrop-blur-xl py-2 shadow-2xl shadow-black/30">
                 <div className="border-b border-gray-700/50 px-4 py-3">
-                  <p className="text-sm font-medium text-white">{user?.name}</p>
-                  <p className="text-xs text-gray-400 mt-0.5">{user?.phone}</p>
+                  <p className="text-sm font-medium text-white">
+                    {user?.userName || user?.name || 'Usuário'}
+                  </p>
+                  <p className="text-xs text-gray-400 mt-0.5">
+                    {user?.name || user?.email || user?.phone || 'Sem informação'}
+                  </p>
                 </div>
                 <div className="p-2">
                   <button
