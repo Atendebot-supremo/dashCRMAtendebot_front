@@ -11,8 +11,7 @@ import {
   filterCardsByChannel,
 } from '@/lib/utils/calculations'
 import { formatCurrency } from '@/lib/utils/format'
-import type { DashboardFilters } from '@/lib/api/helena-types'
-import type { Card } from '@/lib/api/helena-types'
+import type { DashboardFilters, Card } from '@/types/crm'
 
 interface LossAnalysisProps {
   filters?: DashboardFilters

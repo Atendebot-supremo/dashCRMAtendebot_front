@@ -11,7 +11,7 @@ import {
 import { Card, CardContent } from '@/components/ui/card'
 import { useCards } from '@/lib/api/queries'
 import { extractUniqueResponsibles, extractUniqueChannels } from '@/lib/utils/stage-mapping'
-import type { DashboardFilters } from '@/lib/api/helena-types'
+import type { DashboardFilters } from '@/types/crm'
 
 interface FiltersBarProps {
   filters: DashboardFilters

@@ -3,26 +3,25 @@ import { helenaClient } from './helena-client'
 import type {
   Panel,
   Card,
-  Contact,
-  User,
+  Agent,
   DashboardFilters,
-} from './helena-types'
+  GetCardsParams,
+} from '@/types/crm'
 
 // Query keys
 export const queryKeys = {
-  panels: ['helena', 'panels'] as const,
-  panel: (id: string) => ['helena', 'panel', id] as const,
-  cards: (filters?: DashboardFilters) =>
-    ['helena', 'cards', filters] as const,
-  card: (id: string) => ['helena', 'card', id] as const,
-  contacts: (filters?: DashboardFilters) =>
-    ['helena', 'contacts', filters] as const,
-  users: ['helena', 'users'] as const,
-  user: (id: string) => ['helena', 'user', id] as const,
-  channels: ['helena', 'channels'] as const,
+  panels: ['crm', 'panels'] as const,
+  panel: (id: string) => ['crm', 'panel', id] as const,
+  cards: (params?: GetCardsParams) => ['crm', 'cards', params] as const,
+  card: (id: string) => ['crm', 'card', id] as const,
+  agents: (panelId: string) => ['crm', 'agents', panelId] as const,
+  agent: (id: string) => ['crm', 'agent', id] as const,
 }
 
-// Hooks para Painéis
+// ========================================
+// HOOKS PARA PAINÉIS
+// ========================================
+
 export const usePanels = () => {
   return useQuery({
     queryKey: queryKeys.panels,
@@ -30,17 +29,11 @@ export const usePanels = () => {
       console.log('🔍 [usePanels] Iniciando busca de painéis...')
       const response = await helenaClient.getPanels()
       const panels = response.items || []
-      console.log(`🔍 [usePanels] Painéis retornados: ${panels.length}`, panels)
+      console.log(`✅ [usePanels] ${panels.length} painéis carregados`)
       return panels
     },
     staleTime: 5 * 60 * 1000, // 5 minutos
     retry: 1,
-    onSuccess: (data) => {
-      console.log(`✅ [usePanels] Sucesso! ${data.length} painéis carregados`)
-    },
-    onError: (error) => {
-      console.error('❌ [usePanels] Erro ao buscar painéis:', error)
-    },
   })
 }
 
@@ -54,26 +47,39 @@ export const usePanel = (panelId: string, enabled = true) => {
   })
 }
 
-// Hooks para Cards
-export const useCards = (filters?: DashboardFilters, enabled = true) => {
+// ========================================
+// HOOKS PARA CARDS
+// ========================================
+
+export const useCards = (params?: GetCardsParams, enabled = true) => {
   return useQuery({
-    queryKey: queryKeys.cards(filters),
+    queryKey: queryKeys.cards(params),
     queryFn: async () => {
-      console.log('🔍 [useCards] Iniciando busca de cards...', { filters, enabled })
-      const response = await helenaClient.getCards(filters)
+      if (!params?.panelId) {
+        console.log('⚠️ [useCards] panelId não fornecido, buscando primeiro painel...')
+        const panels = await helenaClient.getPanels()
+        if (!panels.items || panels.items.length === 0) {
+          throw new Error('Nenhum painel encontrado')
+        }
+        const firstPanelId = panels.items[0].id
+        console.log(`🔍 [useCards] Usando panelId: ${firstPanelId}`)
+        
+        const response = await helenaClient.getCards({ 
+          ...params, 
+          panelId: firstPanelId 
+        })
+        return response.items || []
+      }
+
+      console.log('🔍 [useCards] Buscando cards...', params)
+      const response = await helenaClient.getCards(params)
       const cards = response.items || []
-      console.log(`🔍 [useCards] Cards retornados: ${cards.length}`, cards.slice(0, 3))
+      console.log(`✅ [useCards] ${cards.length} cards carregados`)
       return cards
     },
     enabled,
-    staleTime: 2 * 60 * 1000, // 2 minutos (dados mais dinâmicos)
+    staleTime: 2 * 60 * 1000, // 2 minutos
     retry: 1,
-    onSuccess: (data) => {
-      console.log(`✅ [useCards] Sucesso! ${data.length} cards carregados`)
-    },
-    onError: (error) => {
-      console.error('❌ [useCards] Erro ao buscar cards:', error)
-    },
   })
 }
 
@@ -87,82 +93,66 @@ export const useCard = (cardId: string, enabled = true) => {
   })
 }
 
-// Hooks para Contatos
-export const useContacts = (filters?: DashboardFilters, enabled = true) => {
+// ========================================
+// HOOKS PARA AGENTES
+// ========================================
+
+export const useAgents = (panelId: string, enabled = true) => {
   return useQuery({
-    queryKey: queryKeys.contacts(filters),
+    queryKey: queryKeys.agents(panelId),
     queryFn: async () => {
-      const response = await helenaClient.getContacts(filters)
-      return response.items || []
+      console.log('🔍 [useAgents] Buscando agentes...', { panelId })
+      const response = await helenaClient.getAgents(panelId)
+      const agents = response.items || []
+      console.log(`✅ [useAgents] ${agents.length} agentes carregados`)
+      return agents
     },
-    enabled,
-    staleTime: 2 * 60 * 1000,
+    enabled: enabled && !!panelId,
+    staleTime: 5 * 60 * 1000,
     retry: 1,
   })
 }
 
-// Hooks para Usuários/Vendedores - DESABILITADO: rota não existe
-export const useUsers = () => {
+export const useAgent = (agentId: string, enabled = true) => {
   return useQuery({
-    queryKey: queryKeys.users,
-    queryFn: async () => {
-      // Retornar array vazio por enquanto
-      return []
-    },
-    staleTime: 10 * 60 * 1000,
-    retry: 1,
-    enabled: false, // Desabilitado até a rota existir
-  })
-}
-
-export const useUser = (userId: string, enabled = true) => {
-  return useQuery({
-    queryKey: queryKeys.user(userId),
-    queryFn: async () => {
-      return {} as User
-    },
-    enabled: false, // Desabilitado
-    staleTime: 10 * 60 * 1000,
+    queryKey: queryKeys.agent(agentId),
+    queryFn: () => helenaClient.getAgentById(agentId),
+    enabled: enabled && !!agentId,
+    staleTime: 5 * 60 * 1000,
     retry: 1,
   })
 }
 
-// Hooks para Canais - DESABILITADO: rota não existe
-export const useChannels = () => {
-  return useQuery({
-    queryKey: queryKeys.channels,
-    queryFn: async () => {
-      // Retornar array vazio por enquanto
-      return []
-    },
-    staleTime: 10 * 60 * 1000,
-    retry: 1,
-    enabled: false, // Desabilitado até a rota existir
-  })
-}
+// ========================================
+// HOOK PARA DASHBOARD (DADOS COMBINADOS)
+// ========================================
 
-// Hook para dados do dashboard (métricas agregadas)
 export const useDashboardData = (filters?: DashboardFilters) => {
-  const cardsQuery = useCards(filters)
-  const contactsQuery = useContacts(filters)
-  const usersQuery = useUsers()
-  const channelsQuery = useChannels()
+  const panelsQuery = usePanels()
+  
+  // Usa o panelId do filtro ou o primeiro painel disponível
+  const activePanelId = filters?.panelId || panelsQuery.data?.[0]?.id
+  
+  const cardsQuery = useCards(
+    activePanelId ? {
+      panelId: activePanelId,
+      startDate: filters?.startDate,
+      endDate: filters?.endDate,
+      userId: filters?.userId,
+      channelId: filters?.channelId,
+    } : undefined,
+    !!activePanelId
+  )
+  
+  const agentsQuery = useAgents(activePanelId || '', !!activePanelId)
 
   return {
+    panels: panelsQuery,
     cards: cardsQuery,
-    contacts: contactsQuery,
-    users: usersQuery,
-    channels: channelsQuery,
-    isLoading:
-      cardsQuery.isLoading ||
-      contactsQuery.isLoading ||
-      usersQuery.isLoading ||
-      channelsQuery.isLoading,
-    isError:
-      cardsQuery.isError ||
-      contactsQuery.isError ||
-      usersQuery.isError ||
-      channelsQuery.isError,
+    agents: agentsQuery,
+    activePanelId,
+    isLoading: panelsQuery.isLoading || cardsQuery.isLoading || agentsQuery.isLoading,
+    isError: panelsQuery.isError || cardsQuery.isError || agentsQuery.isError,
+    error: panelsQuery.error || cardsQuery.error || agentsQuery.error,
   }
 }
-

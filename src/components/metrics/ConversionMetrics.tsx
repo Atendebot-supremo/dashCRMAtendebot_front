@@ -9,8 +9,7 @@ import {
   filterCardsByChannel,
 } from '@/lib/utils/calculations'
 import { formatPercentage, formatDays, formatMinutes } from '@/lib/utils/format'
-import type { DashboardFilters } from '@/lib/api/helena-types'
-import type { Card } from '@/lib/api/helena-types'
+import type { DashboardFilters, Card } from '@/types/crm'
 
 interface ConversionMetricsProps {
   filters?: DashboardFilters

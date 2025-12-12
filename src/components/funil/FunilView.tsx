@@ -5,8 +5,7 @@ import { useCards } from '@/lib/api/queries'
 import { calculateFunnelMetrics } from '@/lib/utils/calculations'
 import { filterCardsByPeriod, filterCardsByUser, filterCardsByChannel } from '@/lib/utils/calculations'
 import { formatCurrency, formatPercentage } from '@/lib/utils/format'
-import type { DashboardFilters } from '@/lib/api/helena-types'
-import type { Card } from '@/lib/api/helena-types'
+import type { DashboardFilters, Card } from '@/types/crm'
 
 interface FunilViewProps {
   filters?: DashboardFilters

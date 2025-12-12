@@ -1,4 +1,4 @@
-import type { Card } from '../api/helena-types'
+import type { Card } from '@/types/crm'
 
 // Mapeamento dinâmico de stepId para nome
 // Será atualizado quando buscarmos informações do painel

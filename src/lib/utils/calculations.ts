@@ -1,4 +1,4 @@
-import type { Card, DashboardFilters } from '../api/helena-types'
+import type { Card, DashboardFilters } from '@/types/crm'
 import { calculateDaysBetween, calculateMinutesBetween } from './date'
 
 export interface FunnelMetrics {
