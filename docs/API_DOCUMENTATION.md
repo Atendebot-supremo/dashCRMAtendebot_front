@@ -224,12 +224,18 @@ Authorization: Bearer <jwt-token>
 
 #### GET `/api/crm/cards`
 
-Lista cards com filtros.
+Lista cards com filtros. **IMPORTANTE**: A API retorna paginação. O frontend busca automaticamente todas as páginas para garantir que todos os cards sejam carregados.
 
 **Headers:**
 ```
 Authorization: Bearer <jwt-token>
 ```
+
+**⚠️ Nota sobre Paginação:**
+- A API retorna cards paginados (padrão: 15 por página)
+- O frontend implementa busca automática de todas as páginas
+- Use `pageSize=100` para reduzir o número de requisições
+- O método `getCards()` no `helena-client.ts` consolida todas as páginas automaticamente
 
 **Query Parameters:**
 - `panelId` (string, obrigatório): ID do painel

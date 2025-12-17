@@ -445,14 +445,37 @@ Você agora tem:
 
 **Projeto:** dashCRMAtendebot  
 **Data:** Janeiro 2025  
-**Versão:** 1.1.0  
-**Status:** ✅ Dashboard em Produção - Tema Dark Elegante Implementado  
+**Versão:** 1.2.0  
+**Status:** ✅ Dashboard em Produção - Sidebar e Correções Implementadas  
 **Repositório:** https://github.com/Atendebot-supremo/dashCRMAtendebot_front  
 **Última atualização:** Janeiro 2025
 
 ---
 
-## 🎨 Mudanças Recentes (v1.1.0)
+## 🎨 Mudanças Recentes (v1.2.0)
+
+### Sidebar Colapsável
+- Sidebar lateral com largura ajustável (320px expandida, 64px colapsada)
+- Header com logo e perfil do usuário integrado
+- Filtros movidos para dentro da sidebar
+- Controles de visibilidade de gráficos com checkboxes
+- Persistência de estado no localStorage
+- Responsividade completa (drawer mobile, sidebar desktop)
+
+### Correções Críticas
+- **Paginação de Cards**: Corrigido problema onde apenas a primeira página (15 cards) era carregada. Agora busca automaticamente todas as páginas (57+ cards).
+- **Cálculo do Funil**: Corrigido mapeamento incorreto entre cards e etapas. Agora usa `stepId` em vez de `stepTitle` para garantir precisão.
+- **Carregamento de Etapas**: Otimizado para priorizar etapas vindas da lista de painéis, evitando erro 500 do endpoint individual.
+
+### Melhorias de Debug
+- Logs detalhados em todas as chamadas de API
+- Logs estruturados com emojis para fácil identificação
+- Agrupamento de cards por etapa nos logs
+- Progresso página por página visível no console
+
+---
+
+## 🎨 Mudanças Anteriores (v1.1.0)
 
 ### Design System - Tema Dark Elegante
 - Dashboard completo redesenhado com tema dark moderno

@@ -84,12 +84,18 @@ export interface ApiResponse<T> {
 
 export interface PaginatedData<T> {
   items: T[]
-  pagination: {
+  // Campos de paginação podem vir aninhados ou no nível raiz
+  pagination?: {
     totalItems: number
     totalPages: number
     pageNumber: number
     pageSize: number
   }
+  // Campos no nível raiz (como a API Helena retorna)
+  totalItems?: number
+  totalPages?: number
+  pageNumber?: number
+  pageSize?: number
 }
 
 export interface ListData<T> {

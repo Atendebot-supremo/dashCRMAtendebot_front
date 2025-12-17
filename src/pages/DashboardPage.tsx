@@ -51,25 +51,51 @@ const DashboardPage = () => {
     }
   }, [activePanelId, filters.panelId])
   
-  // Buscar informações completas do painel para mapear etapas
+  // Buscar etapas do painel - PRIMEIRO tenta usar as etapas que já vêm na lista de painéis
   useEffect(() => {
+    if (activePanelId && panels.data) {
+      // Tentar encontrar o painel na lista que já foi carregada
+      const panelFromList = panels.data.find(p => p.id === activePanelId)
+      
+      if (panelFromList?.steps && Array.isArray(panelFromList.steps) && panelFromList.steps.length > 0) {
+        console.log('✅ [DashboardPage] Usando etapas da lista de painéis:', panelFromList.steps.length)
+        console.log('✅ [DashboardPage] Etapas encontradas:', JSON.stringify(panelFromList.steps.map(s => ({ id: s.id, title: s.title, position: s.position })), null, 2))
+        updateStepMapping(panelFromList.steps)
+        return
+      } else {
+        console.warn('⚠️ [DashboardPage] Painel encontrado na lista mas sem steps:', {
+          panelId: activePanelId,
+          hasPanel: !!panelFromList,
+          hasSteps: !!panelFromList?.steps,
+          stepsLength: panelFromList?.steps?.length || 0
+        })
+      }
+    }
+    
+    // Se não encontrou na lista, tenta buscar via getPanelById (pode falhar)
     const fetchPanelDetails = async () => {
       if (activePanelId) {
         try {
+          console.log('🔄 [DashboardPage] Tentando buscar detalhes do painel via API:', activePanelId)
           const panelDetails = await helenaClient.getPanelById(activePanelId)
           
           // Se o painel tiver steps, atualizar o mapeamento
           if (panelDetails?.steps && Array.isArray(panelDetails.steps)) {
+            console.log('✅ [DashboardPage] Atualizando mapeamento de etapas via API:', panelDetails.steps.length)
+            console.log('✅ [DashboardPage] Etapas:', JSON.stringify(panelDetails.steps, null, 2))
             updateStepMapping(panelDetails.steps)
+          } else {
+            console.warn('⚠️ [DashboardPage] Painel não tem steps ou steps não é array')
           }
         } catch (error) {
-          console.error('Erro ao buscar detalhes do painel:', error)
+          console.warn('⚠️ [DashboardPage] Erro ao buscar detalhes do painel (pode ser normal se a rota não existir):', error)
+          // Não é um erro crítico, as etapas podem vir dos cards
         }
       }
     }
     
     fetchPanelDetails()
-  }, [activePanelId])
+  }, [activePanelId, panels.data])
 
   const cardsData = cards.data || []
 

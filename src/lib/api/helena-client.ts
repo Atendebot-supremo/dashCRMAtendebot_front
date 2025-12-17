@@ -112,6 +112,7 @@ const fetchWithAuth = async <T>(
       success: data.success,
       hasData: !!data.data,
     })
+    console.log(`✅ [API] Resposta completa:`, JSON.stringify(data, null, 2))
 
     // A API retorna { success, data, message }
     // Retornamos apenas os dados
@@ -154,9 +155,13 @@ export const helenaClient = {
    * GET /api/crm/panels
    */
   async getPanels(): Promise<ListData<Panel>> {
+    console.log('📋 [API] ==========================================')
+    console.log('📋 [API] GET /api/crm/panels')
     console.log('📋 [API] Buscando painéis...')
     const result = await fetchWithAuth<ListData<Panel>>('/api/crm/panels')
-    console.log(`📋 [API] Painéis encontrados: ${result.items?.length || 0}`)
+    console.log(`📋 [API] ✅ Painéis encontrados: ${result.items?.length || 0}`)
+    console.log('📋 [API] Dados completos:', JSON.stringify(result, null, 2))
+    console.log('📋 [API] ==========================================')
     return result
   },
 
@@ -165,9 +170,15 @@ export const helenaClient = {
    * GET /api/crm/panels/:id
    */
   async getPanelById(panelId: string): Promise<Panel> {
+    console.log('📋 [API] ==========================================')
+    console.log(`📋 [API] GET /api/crm/panels/${panelId}`)
     console.log('📋 [API] Buscando painel:', panelId)
     const result = await fetchWithAuth<Panel>(`/api/crm/panels/${panelId}`)
-    console.log('📋 [API] Painel recebido:', result.name)
+    console.log('📋 [API] ✅ Painel recebido:', result.name)
+    console.log(`📋 [API] Total de etapas (steps): ${result.steps?.length || 0}`)
+    console.log('📋 [API] Etapas (steps):', JSON.stringify(result.steps, null, 2))
+    console.log('📋 [API] Dados completos do painel:', JSON.stringify(result, null, 2))
+    console.log('📋 [API] ==========================================')
     return result
   },
 
@@ -176,30 +187,79 @@ export const helenaClient = {
   // ========================================
 
   /**
-   * Lista cards com filtros opcionais
+   * Lista cards com filtros opcionais - BUSCA TODAS AS PÁGINAS
    * GET /api/crm/cards?panelId=xxx&startDate=xxx&endDate=xxx
    */
   async getCards(params: GetCardsParams): Promise<PaginatedData<Card>> {
-    console.log('🎴 [API] Buscando cards...', { params })
+    console.log('🎴 [API] ==========================================')
+    console.log('🎴 [API] GET /api/crm/cards (BUSCANDO TODAS AS PÁGINAS)')
+    console.log('🎴 [API] Parâmetros:', JSON.stringify(params, null, 2))
     
-    const queryParams = new URLSearchParams()
+    const allCards: Card[] = []
+    let currentPage = 1
+    let totalPages = 1
+    const pageSize = 100 // Buscar 100 por vez para reduzir requisições
     
-    // panelId é obrigatório
-    queryParams.append('panelId', params.panelId)
-    
-    if (params.startDate) queryParams.append('startDate', params.startDate)
-    if (params.endDate) queryParams.append('endDate', params.endDate)
-    if (params.userId) queryParams.append('userId', params.userId)
-    if (params.channelId) queryParams.append('channelId', params.channelId)
-    if (params.stepId) queryParams.append('stepId', params.stepId)
-    if (params.page) queryParams.append('page', String(params.page))
-    if (params.pageSize) queryParams.append('pageSize', String(params.pageSize))
+    // Loop para buscar todas as páginas
+    do {
+      const queryParams = new URLSearchParams()
+      
+      // panelId é obrigatório
+      queryParams.append('panelId', params.panelId)
+      
+      if (params.startDate) queryParams.append('startDate', params.startDate)
+      if (params.endDate) queryParams.append('endDate', params.endDate)
+      if (params.userId) queryParams.append('userId', params.userId)
+      if (params.channelId) queryParams.append('channelId', params.channelId)
+      if (params.stepId) queryParams.append('stepId', params.stepId)
+      
+      // Paginação
+      queryParams.append('page', String(currentPage))
+      queryParams.append('pageSize', String(pageSize))
 
-    const endpoint = `/api/crm/cards?${queryParams.toString()}`
-    const result = await fetchWithAuth<PaginatedData<Card>>(endpoint)
+      const endpoint = `/api/crm/cards?${queryParams.toString()}`
+      console.log(`🎴 [API] Buscando página ${currentPage}...`)
+      console.log('🎴 [API] URL:', `${API_URL}${endpoint}`)
+      
+      const result = await fetchWithAuth<PaginatedData<Card>>(endpoint)
+      
+      // Adicionar cards da página atual
+      if (result.items && result.items.length > 0) {
+        allCards.push(...result.items)
+      }
+      
+      // Atualizar totalPages a partir da resposta da API
+      // A API pode retornar em dois formatos:
+      // 1. { totalItems, totalPages, pageNumber, pageSize } (diretamente)
+      // 2. { pagination: { totalItems, totalPages, ... } } (aninhado)
+      const apiTotalPages = (result as any).totalPages || result.pagination?.totalPages
+      const apiTotalItems = (result as any).totalItems || result.pagination?.totalItems
+      totalPages = apiTotalPages || Math.ceil((apiTotalItems || 0) / pageSize) || 1
+      
+      console.log(`🎴 [API] Página ${currentPage}/${totalPages}: ${result.items?.length || 0} cards`)
+      
+      currentPage++
+    } while (currentPage <= totalPages)
     
-    console.log(`🎴 [API] Cards encontrados: ${result.items?.length || 0}`)
-    return result
+    console.log(`🎴 [API] ✅ TOTAL DE CARDS CARREGADOS: ${allCards.length}`)
+    
+    // Agrupar cards por stepTitle para debug
+    const cardsByStep: Record<string, number> = {}
+    allCards.forEach(card => {
+      const step = card.stepTitle || 'Sem etapa'
+      cardsByStep[step] = (cardsByStep[step] || 0) + 1
+    })
+    console.log('🎴 [API] Cards por etapa:', JSON.stringify(cardsByStep, null, 2))
+    console.log('🎴 [API] ==========================================')
+    
+    // Retornar todos os cards como se fosse uma única página
+    return {
+      items: allCards,
+      totalItems: allCards.length,
+      totalPages: 1,
+      pageNumber: 1,
+      pageSize: allCards.length,
+    }
   },
 
   /**
@@ -222,10 +282,14 @@ export const helenaClient = {
    * GET /api/crm/agents?panelId=xxx
    */
   async getAgents(panelId: string): Promise<ListData<Agent>> {
+    console.log('👥 [API] ==========================================')
+    console.log(`👥 [API] GET /api/crm/agents?panelId=${panelId}`)
     console.log('👥 [API] Buscando agentes...')
     const params = new URLSearchParams({ panelId })
     const result = await fetchWithAuth<ListData<Agent>>(`/api/crm/agents?${params}`)
-    console.log(`👥 [API] Agentes encontrados: ${result.items?.length || 0}`)
+    console.log(`👥 [API] ✅ Agentes encontrados: ${result.items?.length || 0}`)
+    console.log('👥 [API] Dados completos:', JSON.stringify(result, null, 2))
+    console.log('👥 [API] ==========================================')
     return result
   },
 

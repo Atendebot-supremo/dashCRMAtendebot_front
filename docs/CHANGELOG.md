@@ -5,6 +5,88 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/),
 e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
+## [1.2.0] - 2025-01-17
+
+### ✨ Adicionado
+
+#### Sidebar Colapsável
+- Sidebar lateral colapsável com largura ajustável (320px expandida, 64px colapsada)
+- Header da sidebar com logo e perfil do usuário
+- Integração de filtros dentro da sidebar
+- Controles de visibilidade de gráficos com checkboxes
+- Persistência de estado (colapso e visibilidade) no localStorage
+- Responsividade: drawer overlay no mobile, sidebar fixa no desktop
+- Botão toggle para expandir/colapsar sidebar
+
+#### Controles de Visibilidade
+- Componente `GraphVisibilityControls` para controlar exibição de gráficos
+- Checkboxes individuais para cada tipo de gráfico:
+  - Métricas de Conversão
+  - Métricas de Receita
+  - Funil de Vendas
+  - Performance por Vendedor
+  - Análise de Perdas
+  - Comparação Temporal
+  - Análise de Produtos
+- Botões "Mostrar Todos" e "Ocultar Todos"
+- Estado padrão: todos os gráficos visíveis
+
+### 🐛 Corrigido
+
+#### Paginação de Cards
+- **Problema crítico**: Frontend buscava apenas a primeira página (15 cards) de um total de 57+ cards
+- **Solução**: Implementado loop automático para buscar todas as páginas
+- Método `getCards()` agora busca todas as páginas automaticamente com `pageSize=100`
+- Consolidação de todos os cards em um único array antes de retornar
+- Logs detalhados mostrando progresso página por página
+
+#### Cálculo do Funil
+- **Problema**: Funil mostrava 0 leads em etapas que tinham cards (ex: Pré-qualificação com 17 cards)
+- **Causa**: Mapeamento incorreto entre `card.stepTitle` e `step.title` do painel
+- **Solução**: Mapeamento agora usa `stepId` (mais confiável que `stepTitle`)
+- Função `calculateFunnelMetrics()` agora compara `card.stepId` com `step.id`
+- Garantia de que todas as etapas do painel aparecem, mesmo sem cards
+
+#### Carregamento de Etapas do Painel
+- **Problema**: Endpoint `GET /api/crm/panels/:id` retornava erro 500
+- **Solução**: Priorização de etapas vindas de `GET /api/crm/panels` (já inclui steps)
+- Fallback para `getPanelById()` apenas se etapas não estiverem na lista
+- Logs detalhados para debug do processo de carregamento
+
+### 🔧 Melhorado
+
+#### Logs de Debug
+- Logs detalhados em todas as chamadas de API:
+  - `helena-client.ts`: Logs de requisições, respostas e paginação
+  - `queries.ts`: Logs de status de carregamento e dados recebidos
+  - `calculations.ts`: Logs de cálculo de métricas com agrupamento por etapa
+  - `DashboardPage.tsx`: Logs de carregamento de etapas e mapeamento
+- Logs estruturados com emojis para fácil identificação:
+  - 📋 Painéis
+  - 🎴 Cards
+  - 👥 Agentes
+  - 📊 Métricas
+  - ✅ Sucesso
+  - ⚠️ Avisos
+  - ❌ Erros
+
+#### Estrutura de Layout
+- `DashboardLayout` refatorado para usar sidebar em vez de header/footer
+- Conteúdo principal com scroll independente da sidebar
+- Sidebar fixa com `position: fixed` para não rolar com o conteúdo
+- Espaçamento ajustado para acomodar sidebar
+
+#### Tipos TypeScript
+- `PaginatedData` atualizado para suportar campos no nível raiz e aninhados
+- Compatibilidade com diferentes formatos de resposta da API
+
+### 📝 Documentação
+
+- CHANGELOG atualizado com todas as correções
+- Logs de debug documentados para facilitar troubleshooting
+
+---
+
 ## [1.1.0] - 2025-01-12
 
 ### ✨ Adicionado

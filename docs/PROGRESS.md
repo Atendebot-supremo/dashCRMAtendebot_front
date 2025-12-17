@@ -2,6 +2,32 @@
 
 ## 📅 Histórico de Desenvolvimento
 
+### Versão 1.2.0 - Janeiro 2025
+
+#### ✅ Concluído
+
+**Sidebar Colapsável**
+- [x] Sidebar lateral com largura ajustável (320px/64px)
+- [x] Header com logo e perfil do usuário
+- [x] Filtros integrados na sidebar
+- [x] Controles de visibilidade de gráficos
+- [x] Persistência de estado no localStorage
+- [x] Responsividade (drawer mobile, sidebar desktop)
+- [x] Botão toggle funcional
+
+**Correções Críticas**
+- [x] Paginação de cards corrigida (busca todas as páginas)
+- [x] Cálculo do funil corrigido (mapeamento por stepId)
+- [x] Carregamento de etapas otimizado (prioriza lista de painéis)
+- [x] Logs de debug detalhados em todas as APIs
+
+**Melhorias**
+- [x] Logs estruturados com emojis para fácil identificação
+- [x] Tipos TypeScript atualizados (PaginatedData)
+- [x] Layout refatorado para sidebar fixa
+
+---
+
 ### Versão 1.1.0 - Janeiro 2025
 
 #### ✅ Concluído
@@ -85,11 +111,13 @@
 
 #### Dashboard
 - ✅ Visualização completa de métricas
-- ✅ Funil de vendas interativo
-- ✅ Filtros funcionais (período, vendedor, canal)
+- ✅ Funil de vendas interativo (corrigido - mostra todas as etapas)
+- ✅ Filtros funcionais (período, vendedor, canal) - integrados na sidebar
+- ✅ Sidebar colapsável com controles de visibilidade
 - ✅ Loading states em todos os componentes
 - ✅ Error handling robusto
 - ✅ Design responsivo
+- ✅ Paginação completa de cards (busca todas as páginas)
 
 #### Autenticação
 - ✅ Login com telefone ou email
@@ -274,6 +302,6 @@
 ---
 
 **Última atualização:** Janeiro 2025  
-**Versão atual:** 1.1.0  
+**Versão atual:** 1.2.0  
 **Status:** ✅ Em produção e desenvolvimento ativo
 

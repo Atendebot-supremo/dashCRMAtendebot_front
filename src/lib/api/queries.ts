@@ -30,6 +30,7 @@ export const usePanels = () => {
       const response = await helenaClient.getPanels()
       const panels = response.items || []
       console.log(`✅ [usePanels] ${panels.length} painéis carregados`)
+      console.log('✅ [usePanels] Painéis completos:', JSON.stringify(panels, null, 2))
       return panels
     },
     staleTime: 5 * 60 * 1000, // 5 minutos
@@ -68,13 +69,17 @@ export const useCards = (params?: GetCardsParams, enabled = true) => {
           ...params, 
           panelId: firstPanelId 
         })
-        return response.items || []
+        const cards = response.items || []
+        console.log(`✅ [useCards] ${cards.length} cards carregados`)
+        console.log('✅ [useCards] Cards completos:', JSON.stringify(cards, null, 2))
+        return cards
       }
 
-      console.log('🔍 [useCards] Buscando cards...', params)
+      console.log('🔍 [useCards] Buscando cards...', JSON.stringify(params, null, 2))
       const response = await helenaClient.getCards(params)
       const cards = response.items || []
       console.log(`✅ [useCards] ${cards.length} cards carregados`)
+      console.log('✅ [useCards] Cards completos:', JSON.stringify(cards, null, 2))
       return cards
     },
     enabled,

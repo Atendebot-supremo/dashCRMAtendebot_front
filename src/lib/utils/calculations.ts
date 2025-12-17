@@ -62,50 +62,131 @@ export const calculateResponseTime = (cards: Card[]): number => {
   return sum / responseTimes.length
 }
 
-import { getStepName } from './stage-mapping'
+import { getStepName, getAllPanelSteps } from './stage-mapping'
 
 export const calculateFunnelMetrics = (cards: Card[]): FunnelMetrics[] => {
-  const stageMap = new Map<string, { cards: Card[]; totalValue: number }>()
+  console.log('📊 [FunnelMetrics] Calculando métricas do funil...')
+  console.log('📊 [FunnelMetrics] Total de cards:', cards.length)
+  
+  // Obter todas as etapas do painel
+  const allSteps = getAllPanelSteps()
+  console.log('📊 [FunnelMetrics] Total de etapas do painel:', allSteps.length)
+  console.log('📊 [FunnelMetrics] Etapas do painel:', allSteps)
+  
+  // Log dos cards com seus stepIds
+  console.log('📊 [FunnelMetrics] Cards com stepIds:', cards.map(c => ({
+    id: c.id,
+    title: c.title,
+    stepId: c.stepId,
+    stepTitle: c.stepTitle
+  })))
+  
+  // Mapear cards por stepId (mais confiável que stepTitle)
+  const stageMap = new Map<string, { cards: Card[]; totalValue: number; stepId: string; stepTitle: string }>()
 
   cards.forEach((card) => {
-    // Usar stepTitle se disponível, senão usar mapeamento de stepId
-    const stage = card.stepTitle || getStepName(card.stepId) || 'Sem etapa'
-    const current = stageMap.get(stage) || { cards: [], totalValue: 0 }
+    // Usar stepId do card para mapear (mais confiável)
+    const cardStepId = card.stepId
+    if (!cardStepId) {
+      console.warn('⚠️ [FunnelMetrics] Card sem stepId:', card.id)
+      return
+    }
+    
+    // Buscar o título da etapa usando o stepId
+    const stepTitle = card.stepTitle || getStepName(cardStepId) || 'Sem etapa'
+    
+    const current = stageMap.get(cardStepId) || { 
+      cards: [], 
+      totalValue: 0, 
+      stepId: cardStepId,
+      stepTitle: stepTitle
+    }
     current.cards.push(card)
     // Usar monetaryAmount se disponível, senão usar value
     current.totalValue += card.monetaryAmount || card.value || 0
-    stageMap.set(stage, current)
+    stageMap.set(cardStepId, current)
   })
 
-  const stages = Array.from(stageMap.entries())
-    .map(([stage, data]) => ({
-      stage,
-      leads: data.cards.length,
-      value: data.totalValue,
-      averageTime: calculateAverageTimeForStage(data.cards),
-    }))
-    .sort((a, b) => b.leads - a.leads)
+  console.log('📊 [FunnelMetrics] Etapas com cards (por stepId):', Array.from(stageMap.entries()).map(([id, data]) => ({
+    stepId: id,
+    stepTitle: data.stepTitle,
+    cardsCount: data.cards.length
+  })))
 
-  // Calcular taxa de conversão (baseado na ordem)
-  const totalLeads = cards.length
-  const metrics = stages.map((stage, index) => {
-    const previousTotal =
-      index > 0
-        ? stages
-            .slice(0, index)
-            .reduce((sum, s) => sum + s.leads, 0)
-        : 0
-    const conversionRate =
-      previousTotal > 0
-        ? calculateConversionRate(stage.leads, previousTotal)
-        : 100
-
+  // Criar métricas para TODAS as etapas do painel, mesmo sem cards
+  const metrics: FunnelMetrics[] = allSteps.map((step, index) => {
+    // Buscar cards pelo stepId (mais confiável)
+    const stageData = stageMap.get(step.id)
+    
+    // Se a etapa tem cards, usar os dados reais
+    if (stageData) {
+      return {
+        stage: step.title,
+        leads: stageData.cards.length,
+        value: stageData.totalValue,
+        averageTime: calculateAverageTimeForStage(stageData.cards),
+        conversionRate: 0, // Será calculado depois
+      }
+    }
+    
+    // Se a etapa não tem cards, criar métricas zeradas
     return {
-      ...stage,
-      conversionRate,
+      stage: step.title,
+      leads: 0,
+      value: 0,
+      averageTime: 0,
+      conversionRate: 0, // Será calculado depois
     }
   })
 
+  // Se não há etapas do painel, usar as etapas que têm cards (fallback)
+  if (allSteps.length === 0) {
+    console.log('⚠️ [FunnelMetrics] Nenhuma etapa do painel encontrada, usando etapas dos cards')
+    const stages = Array.from(stageMap.entries())
+      .map(([stage, data]) => ({
+        stage,
+        leads: data.cards.length,
+        value: data.totalValue,
+        averageTime: calculateAverageTimeForStage(data.cards),
+        conversionRate: 0,
+      }))
+      .sort((a, b) => b.leads - a.leads)
+    
+    // Calcular taxa de conversão
+    stages.forEach((stage, index) => {
+      const previousTotal =
+        index > 0
+          ? stages
+              .slice(0, index)
+              .reduce((sum, s) => sum + s.leads, 0)
+          : 0
+      stage.conversionRate =
+        previousTotal > 0
+          ? calculateConversionRate(stage.leads, previousTotal)
+          : 100
+    })
+    
+    console.log('📊 [FunnelMetrics] Métricas calculadas (fallback):', stages.length)
+    return stages
+  }
+
+  // Calcular taxa de conversão baseado na ordem das etapas do painel
+  let previousTotal = 0
+  metrics.forEach((metric, index) => {
+    if (index === 0) {
+      metric.conversionRate = 100 // Primeira etapa sempre 100%
+    } else {
+      metric.conversionRate =
+        previousTotal > 0
+          ? calculateConversionRate(metric.leads, previousTotal)
+          : 0
+    }
+    previousTotal += metric.leads
+  })
+
+  console.log('📊 [FunnelMetrics] ✅ Métricas calculadas:', metrics.length, 'etapas')
+  console.log('📊 [FunnelMetrics] Métricas:', JSON.stringify(metrics, null, 2))
+  
   return metrics
 }
 

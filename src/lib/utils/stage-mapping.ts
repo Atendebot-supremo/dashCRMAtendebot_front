@@ -4,14 +4,38 @@ import type { Card } from '@/types/crm'
 // Será atualizado quando buscarmos informações do painel
 let stepIdToNameMap: Record<string, string> = {}
 
+// Armazenar todas as etapas do painel (com posição)
+let allPanelSteps: Array<{ id: string; title: string; position: number }> = []
+
 /**
  * Atualiza o mapeamento de stepId para nome
  */
-export const updateStepMapping = (steps: Array<{ id: string; title: string }>) => {
+export const updateStepMapping = (steps: Array<{ id: string; title: string; position?: number }>) => {
+  stepIdToNameMap = {}
+  allPanelSteps = []
+  
   steps.forEach((step) => {
     stepIdToNameMap[step.id] = step.title
+    allPanelSteps.push({
+      id: step.id,
+      title: step.title,
+      position: step.position ?? 0
+    })
   })
+  
+  // Ordenar por posição
+  allPanelSteps.sort((a, b) => a.position - b.position)
+  
   console.log('📋 [StageMapping] Mapeamento de etapas atualizado:', stepIdToNameMap)
+  console.log('📋 [StageMapping] Total de etapas:', allPanelSteps.length)
+  console.log('📋 [StageMapping] Etapas ordenadas:', allPanelSteps)
+}
+
+/**
+ * Retorna todas as etapas do painel ordenadas por posição
+ */
+export const getAllPanelSteps = (): Array<{ id: string; title: string; position: number }> => {
+  return [...allPanelSteps]
 }
 
 /**

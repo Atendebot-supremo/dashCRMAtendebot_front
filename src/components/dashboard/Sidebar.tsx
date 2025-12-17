@@ -1,12 +1,13 @@
-import { useState, useEffect, ReactNode } from 'react'
+import { useState, useEffect } from 'react'
 import { 
   ChevronLeft, 
   ChevronRight, 
-  LayoutDashboard, 
   LogOut, 
   User, 
   ChevronDown,
-  Menu
+  Menu,
+  Filter,
+  Eye
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { apiClient } from '@/lib/api/client'
@@ -120,28 +121,32 @@ const Sidebar = ({
 
   // Desktop: Sidebar fixa
   return (
-    <aside
-      className={`relative h-screen bg-gray-800/80 backdrop-blur-xl border-r border-gray-700/50 transition-all duration-300 ${
-        isCollapsed ? 'w-16' : 'w-80'
-      } flex flex-col`}
-    >
-      <SidebarContent
-        user={user}
-        showUserMenu={showUserMenu}
-        setShowUserMenu={setShowUserMenu}
-        handleLogout={handleLogout}
-        filters={filters}
-        onFiltersChange={onFiltersChange}
-        graphVisibility={graphVisibility}
-        onGraphVisibilityChange={onGraphVisibilityChange}
-        isCollapsed={isCollapsed}
-        isMobile={false}
-      />
+    <>
+      <aside
+        className={`fixed top-0 left-0 h-screen bg-gray-800/80 backdrop-blur-xl border-r border-gray-700/50 transition-all duration-300 z-30 ${
+          isCollapsed ? 'w-16' : 'w-80'
+        } flex flex-col`}
+      >
+        <SidebarContent
+          user={user}
+          showUserMenu={showUserMenu}
+          setShowUserMenu={setShowUserMenu}
+          handleLogout={handleLogout}
+          filters={filters}
+          onFiltersChange={onFiltersChange}
+          graphVisibility={graphVisibility}
+          onGraphVisibilityChange={onGraphVisibilityChange}
+          isCollapsed={isCollapsed}
+          isMobile={false}
+        />
+      </aside>
 
-      {/* Toggle Button */}
+      {/* Toggle Button - Fora do aside para garantir clique completo */}
       <button
         onClick={handleToggleCollapse}
-        className="absolute -right-3 top-20 flex h-6 w-6 items-center justify-center rounded-full bg-gray-800 border border-gray-700/50 text-gray-400 hover:text-white hover:bg-gray-700 transition-colors shadow-lg"
+        className={`fixed top-20 z-40 flex h-6 w-6 items-center justify-center rounded-full bg-gray-800 border border-gray-700/50 text-gray-400 hover:text-white hover:bg-gray-700 transition-all duration-300 shadow-lg ${
+          isCollapsed ? 'left-[52px]' : 'left-[308px]'
+        }`}
         aria-label={isCollapsed ? 'Expandir sidebar' : 'Colapsar sidebar'}
       >
         {isCollapsed ? (
@@ -150,7 +155,10 @@ const Sidebar = ({
           <ChevronLeft className="h-4 w-4" />
         )}
       </button>
-    </aside>
+
+      {/* Spacer para compensar sidebar fixa */}
+      <div className={`flex-shrink-0 transition-all duration-300 ${isCollapsed ? 'w-16' : 'w-80'}`} />
+    </>
   )
 }
 
@@ -183,24 +191,14 @@ const SidebarContent = ({
 }: SidebarContentProps) => {
   return (
     <div className="flex flex-col h-full">
-      {/* Header - Logo e Nome do App */}
+      {/* Header - Logo */}
       <div className="p-4 border-b border-gray-700/50">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center justify-center">
           <img
             src="/logo_verde-300x78.png"
             alt="AtendeBot"
-            className={`object-contain transition-all ${isCollapsed ? 'h-8 w-8' : 'h-10'}`}
+            className={`object-contain transition-all ${isCollapsed ? 'h-8' : 'h-10'}`}
           />
-          {!isCollapsed && (
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#c8fa00]/10">
-                  <LayoutDashboard className="h-4 w-4 text-[#c8fa00]" />
-                </div>
-                <span className="text-base font-semibold text-white">Dashboard CRM</span>
-              </div>
-            </div>
-          )}
         </div>
       </div>
 
@@ -287,13 +285,13 @@ const SidebarContent = ({
           {isCollapsed && (
             <div className="space-y-6 pt-4">
               <div className="flex flex-col items-center gap-2">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#c8fa00]/10 border border-[#c8fa00]/20">
-                  <LayoutDashboard className="h-5 w-5 text-[#c8fa00]" />
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#c8fa00]/10 border border-[#c8fa00]/20" title="Filtros">
+                  <Filter className="h-5 w-5 text-[#c8fa00]" />
                 </div>
               </div>
               <div className="flex flex-col items-center gap-2">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gray-700/30 border border-gray-600/30">
-                  <LayoutDashboard className="h-5 w-5 text-gray-400" />
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gray-700/30 border border-gray-600/30" title="Gráficos">
+                  <Eye className="h-5 w-5 text-gray-400" />
                 </div>
               </div>
             </div>
