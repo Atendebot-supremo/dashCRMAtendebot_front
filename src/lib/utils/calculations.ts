@@ -222,9 +222,12 @@ export const calculateRevenueMetrics = (
       revenueBySeller[card.assignedTo] =
         (revenueBySeller[card.assignedTo] || 0) + (card.value || 0)
     }
-    if (card.channel) {
-      revenueByChannel[card.channel] =
-        (revenueByChannel[card.channel] || 0) + (card.value || 0)
+    // Buscar canal do campo customFields['origem-11']
+    const origem = card.customFields?.['origem-11']
+    if (origem && typeof origem === 'string' && origem.trim()) {
+      const channelName = origem.trim()
+      revenueByChannel[channelName] =
+        (revenueByChannel[channelName] || 0) + (card.value || 0)
     }
   })
 
@@ -372,6 +375,16 @@ export const filterCardsByChannel = (
   channelId?: string
 ): Card[] => {
   if (!channelId) return cards
-  return cards.filter((card) => card.channel === channelId)
+  
+  return cards.filter((card) => {
+    // Buscar canal do campo customFields['origem-11']
+    const origem = card.customFields?.['origem-11']
+    if (origem && typeof origem === 'string' && origem.trim()) {
+      // Comparar com o ID normalizado
+      const cardChannelId = origem.trim().toLowerCase().replace(/\s+/g, '-')
+      return cardChannelId === channelId
+    }
+    return false
+  })
 }
 

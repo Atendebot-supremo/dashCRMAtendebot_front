@@ -29,12 +29,17 @@ const FiltersBar = ({ filters, onFiltersChange }: FiltersBarProps) => {
   
   // Extrair responsáveis únicos dos cards
   const users = useMemo(() => {
-    return extractUniqueResponsibles(allCards)
+    const extracted = extractUniqueResponsibles(allCards)
+    console.log('👥 [FiltersBar] Vendedores extraídos:', extracted)
+    console.log('👥 [FiltersBar] Total de cards analisados:', allCards.length)
+    return extracted
   }, [allCards])
   
-  // Extrair canais únicos dos cards
+  // Extrair canais únicos dos cards (do campo customFields.origem-11)
   const channels = useMemo(() => {
-    return extractUniqueChannels(allCards)
+    const extracted = extractUniqueChannels(allCards)
+    console.log('📡 [FiltersBar] Canais extraídos:', extracted)
+    return extracted
   }, [allCards])
   
   const usersLoading = false

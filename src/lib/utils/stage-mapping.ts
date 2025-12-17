@@ -114,34 +114,26 @@ export const extractUniqueResponsibles = (cards: Card[]): Array<{ id: string; na
 }
 
 /**
- * Extrai canais únicos dos cards ou retorna lista fixa
+ * Extrai canais únicos dos cards a partir do campo customFields['origem-11']
  */
 export const extractUniqueChannels = (cards: Card[]): Array<{ id: string; name: string }> => {
-  // Lista fixa de canais (Meta, Google, WhatsApp)
-  const fixedChannels = [
-    { id: 'meta', name: 'Meta' },
-    { id: 'google', name: 'Google' },
-    { id: 'whatsapp', name: 'WhatsApp' },
-  ]
-  
-  // Tentar extrair canais dos cards
   const channelMap = new Map<string, string>()
   
   cards.forEach((card) => {
-    if (card.channel) {
-      channelMap.set(card.channel, card.channel)
+    // Buscar canal do campo customFields['origem-11']
+    const origem = card.customFields?.['origem-11']
+    if (origem && typeof origem === 'string' && origem.trim()) {
+      // Usar o valor como ID e nome (normalizado)
+      const channelName = origem.trim()
+      const channelId = channelName.toLowerCase().replace(/\s+/g, '-')
+      channelMap.set(channelId, channelName)
     }
   })
   
-  // Se encontrou canais nos cards, usar eles
-  if (channelMap.size > 0) {
-    return Array.from(channelMap.entries()).map(([id, name]) => ({
-      id,
-      name,
-    }))
-  }
-  
-  // Senão, usar lista fixa
-  return fixedChannels
+  // Retornar canais encontrados nos cards
+  return Array.from(channelMap.entries()).map(([id, name]) => ({
+    id,
+    name,
+  }))
 }
 
