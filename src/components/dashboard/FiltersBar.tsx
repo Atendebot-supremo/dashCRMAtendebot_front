@@ -1,6 +1,7 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { Calendar, Filter, RotateCcw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { DateInput } from '@/components/ui/date-input'
 import {
   Select,
   SelectContent,
@@ -18,6 +19,9 @@ interface FiltersBarProps {
 }
 
 const FiltersBar = ({ filters, onFiltersChange }: FiltersBarProps) => {
+  // Estado para controlar se usa período pré-definido ou data customizada
+  const [dateMode, setDateMode] = useState<'preset' | 'custom'>('preset')
+  
   // Buscar cards para extrair responsáveis e canais únicos
   const { data: allCards = [] } = useCards({})
   
@@ -43,6 +47,27 @@ const FiltersBar = ({ filters, onFiltersChange }: FiltersBarProps) => {
       ...filters,
       channelId: value === 'all' ? undefined : value,
     })
+  }
+
+  const handleDateModeChange = (mode: 'preset' | 'custom') => {
+    setDateMode(mode)
+    // Ao trocar de modo
+    if (mode === 'preset') {
+      // Aplicar período padrão (mês atual) se não houver datas customizadas
+      if (!filters.startDate || !filters.endDate) {
+        const now = new Date()
+        const startDate = new Date(now.getFullYear(), now.getMonth(), 1)
+        onFiltersChange({
+          ...filters,
+          startDate: startDate.toISOString().split('T')[0],
+          endDate: now.toISOString().split('T')[0],
+        })
+      }
+      // Se já houver datas, mantém elas (pode ter vindo de custom)
+    } else {
+      // Modo custom: mantém as datas se existirem, senão deixa vazio para o usuário preencher
+      // Não precisa fazer nada, apenas manter o estado atual
+    }
   }
 
   const handlePeriodChange = (period: 'today' | 'week' | 'month' | 'year') => {
@@ -75,6 +100,13 @@ const FiltersBar = ({ filters, onFiltersChange }: FiltersBarProps) => {
     })
   }
 
+  const handleCustomDateChange = (field: 'startDate' | 'endDate', value: string) => {
+    onFiltersChange({
+      ...filters,
+      [field]: value || undefined,
+    })
+  }
+
   return (
     <div className="space-y-4">
       {/* Header */}
@@ -90,27 +122,69 @@ const FiltersBar = ({ filters, onFiltersChange }: FiltersBarProps) => {
 
       {/* Filters - Layout Vertical */}
       <div className="space-y-4">
-        {/* Período */}
+        {/* Tipo de Filtro de Data */}
         <div className="space-y-2">
           <div className="flex items-center gap-2">
             <Calendar className="h-4 w-4 text-[#c8fa00]" />
-            <label className="text-xs font-medium text-gray-400">Período</label>
+            <label className="text-xs font-medium text-gray-400">Filtro de Data</label>
           </div>
           <Select
-            onValueChange={handlePeriodChange}
-            defaultValue="month"
+            value={dateMode}
+            onValueChange={(value) => handleDateModeChange(value as 'preset' | 'custom')}
           >
             <SelectTrigger className="w-full h-10 bg-gray-700/50 border-gray-600/50 text-white hover:bg-gray-700/70 focus:border-[#c8fa00] focus:ring-[#c8fa00]/20 transition-all">
-              <SelectValue placeholder="Período" />
+              <SelectValue placeholder="Tipo de filtro" />
             </SelectTrigger>
             <SelectContent className="bg-gray-800 border-gray-700 text-white">
-              <SelectItem value="today" className="hover:bg-gray-700 focus:bg-gray-700 focus:text-white">Hoje</SelectItem>
-              <SelectItem value="week" className="hover:bg-gray-700 focus:bg-gray-700 focus:text-white">Esta Semana</SelectItem>
-              <SelectItem value="month" className="hover:bg-gray-700 focus:bg-gray-700 focus:text-white">Este Mês</SelectItem>
-              <SelectItem value="year" className="hover:bg-gray-700 focus:bg-gray-700 focus:text-white">Este Ano</SelectItem>
+              <SelectItem value="preset" className="hover:bg-gray-700 focus:bg-gray-700 focus:text-white">
+                Período Pré-definido
+              </SelectItem>
+              <SelectItem value="custom" className="hover:bg-gray-700 focus:bg-gray-700 focus:text-white">
+                Data Customizada
+              </SelectItem>
             </SelectContent>
           </Select>
         </div>
+
+        {/* Período Pré-definido ou Data Customizada */}
+        {dateMode === 'preset' ? (
+          <div className="space-y-2">
+            <label className="text-xs font-medium text-gray-400">Período</label>
+            <Select
+              onValueChange={handlePeriodChange}
+              defaultValue="month"
+            >
+              <SelectTrigger className="w-full h-10 bg-gray-700/50 border-gray-600/50 text-white hover:bg-gray-700/70 focus:border-[#c8fa00] focus:ring-[#c8fa00]/20 transition-all">
+                <SelectValue placeholder="Período" />
+              </SelectTrigger>
+              <SelectContent className="bg-gray-800 border-gray-700 text-white">
+                <SelectItem value="today" className="hover:bg-gray-700 focus:bg-gray-700 focus:text-white">Hoje</SelectItem>
+                <SelectItem value="week" className="hover:bg-gray-700 focus:bg-gray-700 focus:text-white">Esta Semana</SelectItem>
+                <SelectItem value="month" className="hover:bg-gray-700 focus:bg-gray-700 focus:text-white">Este Mês</SelectItem>
+                <SelectItem value="year" className="hover:bg-gray-700 focus:bg-gray-700 focus:text-white">Este Ano</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            <div className="space-y-2">
+              <label className="text-xs font-medium text-gray-400">Data Início</label>
+              <DateInput
+                value={filters.startDate || ''}
+                onChange={(value) => handleCustomDateChange('startDate', value)}
+                className="w-full h-10 bg-gray-700/50 border-gray-600/50 text-white placeholder:text-gray-500 focus:border-[#c8fa00] focus:ring-[#c8fa00]/20 transition-all"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-xs font-medium text-gray-400">Data Fim</label>
+              <DateInput
+                value={filters.endDate || ''}
+                onChange={(value) => handleCustomDateChange('endDate', value)}
+                className="w-full h-10 bg-gray-700/50 border-gray-600/50 text-white placeholder:text-gray-500 focus:border-[#c8fa00] focus:ring-[#c8fa00]/20 transition-all"
+              />
+            </div>
+          </div>
+        )}
 
         {/* Usuário/Vendedor */}
         <div className="space-y-2">
@@ -159,7 +233,10 @@ const FiltersBar = ({ filters, onFiltersChange }: FiltersBarProps) => {
         {/* Reset */}
         <Button
           variant="outline"
-          onClick={() => onFiltersChange({})}
+          onClick={() => {
+            setDateMode('preset')
+            onFiltersChange({})
+          }}
           className="w-full h-10 bg-transparent border-gray-600/50 text-gray-300 hover:bg-gray-700/50 hover:text-white hover:border-gray-500 transition-all"
         >
           <RotateCcw className="h-4 w-4 mr-2" />
