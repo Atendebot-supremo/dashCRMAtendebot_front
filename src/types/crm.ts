@@ -117,6 +117,16 @@ export interface DashboardFilters {
   channelId?: string
 }
 
+export interface GraphVisibility {
+  conversionMetrics: boolean
+  revenueMetrics: boolean
+  funilView: boolean
+  sellerPerformance: boolean
+  lossAnalysis: boolean
+  temporalComparison: boolean
+  productAnalysis: boolean
+}
+
 // Dados do usuário logado
 export interface AuthUser {
   id: string

@@ -76,10 +76,10 @@ const FiltersBar = ({ filters, onFiltersChange }: FiltersBarProps) => {
   }
 
   return (
-    <div className="rounded-xl border border-gray-700/50 bg-gray-800/80 backdrop-blur-xl shadow-xl shadow-black/10 p-6">
+    <div className="space-y-4">
       {/* Header */}
-      <div className="flex items-center gap-3 mb-5">
-        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#c8fa00]/10">
+      <div className="flex items-center gap-2">
+        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#c8fa00]/10">
           <Filter className="h-4 w-4 text-[#c8fa00]" />
         </div>
         <div>
@@ -88,19 +88,19 @@ const FiltersBar = ({ filters, onFiltersChange }: FiltersBarProps) => {
         </div>
       </div>
 
-      {/* Filters Grid */}
-      <div className="flex flex-wrap items-center gap-4">
+      {/* Filters - Layout Vertical */}
+      <div className="space-y-4">
         {/* Período */}
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-700/30">
+        <div className="space-y-2">
+          <div className="flex items-center gap-2">
             <Calendar className="h-4 w-4 text-[#c8fa00]" />
-            <span className="text-xs font-medium text-gray-400">Período</span>
+            <label className="text-xs font-medium text-gray-400">Período</label>
           </div>
           <Select
             onValueChange={handlePeriodChange}
             defaultValue="month"
           >
-            <SelectTrigger className="w-[160px] h-10 bg-gray-700/50 border-gray-600/50 text-white hover:bg-gray-700/70 focus:border-[#c8fa00] focus:ring-[#c8fa00]/20 transition-all">
+            <SelectTrigger className="w-full h-10 bg-gray-700/50 border-gray-600/50 text-white hover:bg-gray-700/70 focus:border-[#c8fa00] focus:ring-[#c8fa00]/20 transition-all">
               <SelectValue placeholder="Período" />
             </SelectTrigger>
             <SelectContent className="bg-gray-800 border-gray-700 text-white">
@@ -112,18 +112,15 @@ const FiltersBar = ({ filters, onFiltersChange }: FiltersBarProps) => {
           </Select>
         </div>
 
-        {/* Divisor */}
-        <div className="h-8 w-px bg-gray-700/50 hidden md:block" />
-
         {/* Usuário/Vendedor */}
-        <div className="flex items-center gap-3">
-          <span className="text-xs font-medium text-gray-400">Vendedor:</span>
+        <div className="space-y-2">
+          <label className="text-xs font-medium text-gray-400">Vendedor</label>
           <Select
             value={filters.userId || 'all'}
             onValueChange={handleUserChange}
             disabled={usersLoading}
           >
-            <SelectTrigger className="w-[180px] h-10 bg-gray-700/50 border-gray-600/50 text-white hover:bg-gray-700/70 focus:border-[#c8fa00] focus:ring-[#c8fa00]/20 transition-all">
+            <SelectTrigger className="w-full h-10 bg-gray-700/50 border-gray-600/50 text-white hover:bg-gray-700/70 focus:border-[#c8fa00] focus:ring-[#c8fa00]/20 transition-all">
               <SelectValue placeholder="Todos os vendedores" />
             </SelectTrigger>
             <SelectContent className="bg-gray-800 border-gray-700 text-white">
@@ -137,18 +134,15 @@ const FiltersBar = ({ filters, onFiltersChange }: FiltersBarProps) => {
           </Select>
         </div>
 
-        {/* Divisor */}
-        <div className="h-8 w-px bg-gray-700/50 hidden md:block" />
-
         {/* Canal */}
-        <div className="flex items-center gap-3">
-          <span className="text-xs font-medium text-gray-400">Canal:</span>
+        <div className="space-y-2">
+          <label className="text-xs font-medium text-gray-400">Canal</label>
           <Select
             value={filters.channelId || 'all'}
             onValueChange={handleChannelChange}
             disabled={channelsLoading}
           >
-            <SelectTrigger className="w-[160px] h-10 bg-gray-700/50 border-gray-600/50 text-white hover:bg-gray-700/70 focus:border-[#c8fa00] focus:ring-[#c8fa00]/20 transition-all">
+            <SelectTrigger className="w-full h-10 bg-gray-700/50 border-gray-600/50 text-white hover:bg-gray-700/70 focus:border-[#c8fa00] focus:ring-[#c8fa00]/20 transition-all">
               <SelectValue placeholder="Todos os canais" />
             </SelectTrigger>
             <SelectContent className="bg-gray-800 border-gray-700 text-white">
@@ -162,14 +156,11 @@ const FiltersBar = ({ filters, onFiltersChange }: FiltersBarProps) => {
           </Select>
         </div>
 
-        {/* Spacer */}
-        <div className="flex-1" />
-
         {/* Reset */}
         <Button
           variant="outline"
           onClick={() => onFiltersChange({})}
-          className="h-10 bg-transparent border-gray-600/50 text-gray-300 hover:bg-gray-700/50 hover:text-white hover:border-gray-500 transition-all"
+          className="w-full h-10 bg-transparent border-gray-600/50 text-gray-300 hover:bg-gray-700/50 hover:text-white hover:border-gray-500 transition-all"
         >
           <RotateCcw className="h-4 w-4 mr-2" />
           Limpar Filtros

@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react'
-import { Loader2, AlertCircle, BarChart3 } from 'lucide-react'
+import { Loader2, AlertCircle } from 'lucide-react'
 import DashboardLayout from '@/components/dashboard/DashboardLayout'
-import FiltersBar from '@/components/dashboard/FiltersBar'
 import FunilView from '@/components/funil/FunilView'
 import RevenueMetrics from '@/components/metrics/RevenueMetrics'
 import ConversionMetrics from '@/components/metrics/ConversionMetrics'
@@ -12,11 +11,38 @@ import ProductAnalysis from '@/components/metrics/ProductAnalysis'
 import { useDashboardData } from '@/lib/api/queries'
 import { updateStepMapping } from '@/lib/utils/stage-mapping'
 import { helenaClient } from '@/lib/api/helena-client'
-import type { DashboardFilters } from '@/types/crm'
+import type { DashboardFilters, GraphVisibility } from '@/types/crm'
 
 const DashboardPage = () => {
   const [filters, setFilters] = useState<DashboardFilters>({})
+  const [graphVisibility, setGraphVisibility] = useState<GraphVisibility>(() => {
+    // Carregar do localStorage ou usar padrão (todos visíveis)
+    const saved = localStorage.getItem('graph_visibility')
+    if (saved) {
+      try {
+        return JSON.parse(saved)
+      } catch {
+        // Se houver erro, usar padrão
+      }
+    }
+    // Padrão: todos visíveis
+    return {
+      conversionMetrics: true,
+      revenueMetrics: true,
+      funilView: true,
+      sellerPerformance: true,
+      lossAnalysis: true,
+      temporalComparison: true,
+      productAnalysis: true,
+    }
+  })
+
   const { panels, cards, agents, activePanelId, isLoading, isError, error } = useDashboardData(filters)
+  
+  // Persistir visibilidade no localStorage
+  useEffect(() => {
+    localStorage.setItem('graph_visibility', JSON.stringify(graphVisibility))
+  }, [graphVisibility])
   
   // Atualizar filtros com o panelId ativo
   useEffect(() => {
@@ -51,10 +77,19 @@ const DashboardPage = () => {
     setFilters(newFilters)
   }
 
+  const handleGraphVisibilityChange = (visibility: GraphVisibility) => {
+    setGraphVisibility(visibility)
+  }
+
   // Loading state
   if (isLoading && !cardsData.length) {
     return (
-      <DashboardLayout>
+      <DashboardLayout
+        filters={filters}
+        onFiltersChange={handleFiltersChange}
+        graphVisibility={graphVisibility}
+        onGraphVisibilityChange={handleGraphVisibilityChange}
+      >
         <div className="flex h-[60vh] items-center justify-center">
           <div className="flex flex-col items-center gap-4">
             <div className="relative">
@@ -76,7 +111,12 @@ const DashboardPage = () => {
   // Error state
   if (isError) {
     return (
-      <DashboardLayout>
+      <DashboardLayout
+        filters={filters}
+        onFiltersChange={handleFiltersChange}
+        graphVisibility={graphVisibility}
+        onGraphVisibilityChange={handleGraphVisibilityChange}
+      >
         <div className="flex h-[60vh] items-center justify-center">
           <div className="flex flex-col items-center gap-4 max-w-md text-center">
             <div className="flex h-16 w-16 items-center justify-center rounded-full bg-red-500/10 border border-red-500/20">
@@ -99,43 +139,63 @@ const DashboardPage = () => {
   }
 
   return (
-    <DashboardLayout>
-      {/* Page Header */}
-      <div className="mb-2">
-        <div className="flex items-center gap-3 mb-1">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#c8fa00]/10 border border-[#c8fa00]/20">
-            <BarChart3 className="h-5 w-5 text-[#c8fa00]" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold text-white">Visão Geral</h1>
-            <p className="text-sm text-gray-500">Acompanhe o desempenho do seu CRM em tempo real</p>
-          </div>
-        </div>
-      </div>
-
-      {/* Filtros */}
-      <FiltersBar filters={filters} onFiltersChange={handleFiltersChange} />
-
+    <DashboardLayout
+      filters={filters}
+      onFiltersChange={handleFiltersChange}
+      graphVisibility={graphVisibility}
+      onGraphVisibilityChange={handleGraphVisibilityChange}
+    >
       {/* Métricas de Conversão */}
-      <ConversionMetrics filters={filters} />
+      {graphVisibility.conversionMetrics && (
+        <ConversionMetrics filters={filters} />
+      )}
 
       {/* Métricas de Receita */}
-      <RevenueMetrics filters={filters} />
+      {graphVisibility.revenueMetrics && (
+        <RevenueMetrics filters={filters} />
+      )}
 
       {/* Funil de Vendas */}
-      <FunilView filters={filters} />
+      {graphVisibility.funilView && (
+        <FunilView filters={filters} />
+      )}
 
       {/* Performance por Vendedor */}
-      <SellerPerformance filters={filters} />
+      {graphVisibility.sellerPerformance && (
+        <SellerPerformance filters={filters} />
+      )}
 
       {/* Análise de Perdas */}
-      <LossAnalysis filters={filters} />
+      {graphVisibility.lossAnalysis && (
+        <LossAnalysis filters={filters} />
+      )}
 
       {/* Comparações Temporais */}
-      <TemporalComparison filters={filters} />
+      {graphVisibility.temporalComparison && (
+        <TemporalComparison filters={filters} />
+      )}
 
       {/* Análise de Produtos */}
-      <ProductAnalysis filters={filters} />
+      {graphVisibility.productAnalysis && (
+        <ProductAnalysis filters={filters} />
+      )}
+
+      {/* Mensagem quando nenhum gráfico está visível */}
+      {Object.values(graphVisibility).every(v => !v) && (
+        <div className="flex h-[60vh] items-center justify-center">
+          <div className="flex flex-col items-center gap-4 text-center">
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gray-700/50">
+              <AlertCircle className="h-8 w-8 text-gray-500" />
+            </div>
+            <div>
+              <p className="text-lg font-medium text-white">Nenhum gráfico visível</p>
+              <p className="text-sm text-gray-400 mt-2">
+                Selecione os gráficos que deseja visualizar na sidebar
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
     </DashboardLayout>
   )
 }
