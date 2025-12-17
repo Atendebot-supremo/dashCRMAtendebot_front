@@ -5,6 +5,84 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/),
 e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
+## [1.1.0] - 2025-01-12
+
+### ✨ Adicionado
+
+#### Design System - Tema Dark Elegante
+- Dashboard completo com tema dark moderno e elegante
+- Efeitos de glassmorphism (backdrop-blur) em todos os componentes
+- Gradientes decorativos com cor accent verde (#c8fa00)
+- Background com efeitos radiais e blur para profundidade visual
+- Cards com bordas sutis e sombras elegantes
+- Hover effects com glow e transições suaves
+- Ícones com containers gradientes e sombras
+
+#### Autenticação
+- Sistema de login com telefone ou email
+- Página de login com tema dark elegante
+- Menu do usuário com dropdown estilizado
+- Exibição de userName e nome da empresa no header
+- Busca automática de perfil completo do usuário
+- Logout funcional com redirecionamento
+
+#### Componentes UI
+- `DashboardLayout` - Layout principal com header, menu e footer estilizados
+- `FiltersBar` - Barra de filtros com design dark e ícones
+- `TremorMetricCard` - Cards de métricas com glassmorphism e efeitos hover
+- `ChartCard` - Container para gráficos com header estilizado
+- Gráficos atualizados (BarChart, LineChart, PieChart, FunnelChart) com tema dark
+- Tabelas com hover effects e badges coloridos
+
+#### Rotas da API
+- Todas as rotas agora usam prefixo `/api/`
+- Login: `POST /api/auth/login`
+- CRM: `/api/crm/*`
+- Métricas: `/api/metrics/*`
+- Configuração de `API_URL` sem `/api` no final
+
+### 🔧 Configurado
+
+#### Estrutura de Tipos
+- `AuthUser` atualizado com `userName` e `email`
+- `LoginResponse` atualizado com estrutura completa do backend
+- Tipos sincronizados entre `auth.ts` e `crm.ts`
+
+#### API Client
+- Método `getUserProfile()` para buscar dados completos do usuário
+- Fallback para dados do localStorage se perfil não disponível
+- Tratamento de erros melhorado
+
+### 🎨 Melhorias de UI/UX
+
+#### Dashboard
+- Fundo gradiente escuro (from-gray-900 via-gray-800 to-gray-900)
+- Efeitos de luz decorativos com cor accent
+- Cards com bordas `border-gray-700/50` e backdrop blur
+- Textos com hierarquia clara (branco para títulos, gray-400 para descrições)
+- Botões com gradientes e sombras
+- Loading states elegantes com animações
+
+#### Componentes de Métricas
+- Todos os componentes atualizados para tema dark
+- Estados de erro com ícones e mensagens claras
+- Estados vazios com mensagens amigáveis
+- Badges coloridos para indicadores (verde para sucesso, vermelho para perdas)
+
+#### Gráficos
+- Grid e eixos com cores escuras
+- Tooltips com fundo escuro e sombras
+- Paleta de cores vibrantes com verde accent como primária
+- Legendas estilizadas
+
+### 📝 Documentação
+
+- CHANGELOG atualizado com todas as mudanças
+- Design system documentado
+- Progresso do projeto documentado
+
+---
+
 ## [1.0.0] - 2024-11
 
 ### ✨ Adicionado
@@ -98,8 +176,7 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 ### 🚧 Planejado
 
 - [ ] Backend intermediário (dashCRMAtendebot_back)
-- [ ] Autenticação JWT
-- [ ] Login/logout
+- [ ] Autenticação JWT completa
 - [ ] Multi-tenancy
 - [ ] Cache avançado no backend
 - [ ] Exportação de dados (Excel, PDF)
@@ -107,14 +184,16 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 - [ ] Dashboard customizável
 - [ ] Filtros salvos
 - [ ] Gráficos interativos avançados
+- [ ] Modo claro/escuro toggle
+- [ ] Internacionalização (i18n)
 
 ### 🔄 Melhorias
 
 - [ ] Otimização de performance
 - [ ] Testes automatizados
 - [ ] Storybook para componentes
-- [ ] Internacionalização (i18n)
 - [ ] Acessibilidade melhorada (WCAG 2.1)
+- [ ] PWA (Progressive Web App)
 
 ---
 
@@ -127,9 +206,9 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 - `📝 Documentação` - Mudanças na documentação
 - `⚡ Performance` - Melhorias de performance
 - `🔐 Segurança` - Correções de segurança
+- `🎨 UI/UX` - Melhorias de interface
 - `🚧 Planejado` - Funcionalidades planejadas
 
 ---
 
-**Última atualização:** Novembro 2024
-
+**Última atualização:** Janeiro 2025

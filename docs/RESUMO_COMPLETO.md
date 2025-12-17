@@ -444,11 +444,41 @@ Você agora tem:
 ---
 
 **Projeto:** dashCRMAtendebot  
-**Data:** Novembro 2024  
-**Versão:** 1.0.0  
-**Status:** ✅ Documentação Completa - Pronto para Implementação  
+**Data:** Janeiro 2025  
+**Versão:** 1.1.0  
+**Status:** ✅ Dashboard em Produção - Tema Dark Elegante Implementado  
 **Repositório:** https://github.com/Atendebot-supremo/dashCRMAtendebot_front  
-**Commit:** 690820c
+**Última atualização:** Janeiro 2025
+
+---
+
+## 🎨 Mudanças Recentes (v1.1.0)
+
+### Design System - Tema Dark Elegante
+- Dashboard completo redesenhado com tema dark moderno
+- Efeitos de glassmorphism em todos os componentes
+- Gradientes decorativos com cor accent verde (#c8fa00)
+- Background com efeitos radiais e blur
+- Cards com bordas sutis e sombras elegantes
+- Hover effects com glow e transições suaves
+
+### Autenticação
+- Sistema de login com telefone ou email
+- Página de login com tema dark elegante
+- Menu do usuário com dropdown estilizado
+- Exibição de userName e nome da empresa
+- Logout funcional
+
+### API e Rotas
+- Todas as rotas atualizadas para usar prefixo `/api/`
+- Configuração de `VITE_API_URL` sem `/api` no final
+- Integração completa com backend intermediário
+
+### Documentação
+- DESIGN_SYSTEM.md criado
+- PROGRESS.md criado
+- CHANGELOG atualizado
+- ENV_VARS atualizado
 
 ---
 

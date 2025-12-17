@@ -73,11 +73,11 @@ npm run deploy:hosting   # Deploy apenas do hosting
 Crie um arquivo `.env` na raiz do projeto:
 
 ```env
-# URL base da API Helena/flw.chat
-VITE_HELENA_API_URL=https://api.flw.chat
+# URL base da API Backend (SEM /api no final)
+VITE_API_URL=https://dashcrmatendebotback-desenvolvimento.up.railway.app
 
-# Token de autenticação permanente
-VITE_HELENA_API_TOKEN=pn_seu_token_aqui
+# Para desenvolvimento local:
+# VITE_API_URL=http://localhost:3000
 ```
 
 **⚠️ Importante:** Em desenvolvimento, o Vite usa um proxy configurado em `vite.config.ts` para evitar problemas de CORS. Em produção, as variáveis são "baked in" durante o build.
@@ -281,12 +281,13 @@ console.error('❌ [HelenaAPI] Erro:', { error })
 ## 📊 Status do Projeto
 
 - ✅ Dashboard funcional
-- ✅ Integração com API Helena
+- ✅ Tema dark elegante com glassmorphism
+- ✅ Sistema de autenticação (login/logout)
+- ✅ Integração com API Backend
 - ✅ Métricas implementadas
 - ✅ Filtros funcionando
 - ✅ Deploy configurado (Railway)
-- ⏳ Backend intermediário (planejado)
-- ⏳ Autenticação JWT (planejado)
+- ✅ Documentação completa
 
 ## 🤝 Contribuindo
 
@@ -310,6 +311,6 @@ Este projeto é privado e proprietário.
 
 **Desenvolvido com ❤️ para AtendeBot**
 
-**Versão:** 1.0.0  
-**Última atualização:** Novembro 2024
+**Versão:** 1.1.0  
+**Última atualização:** Janeiro 2025
 

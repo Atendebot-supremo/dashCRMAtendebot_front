@@ -95,6 +95,25 @@ Bem-vindo ao Dashboard CRM AtendeBot! Este guia te ajudará a navegar por toda a
     - Arquitetura
     - Próximos passos
 
+13. **`DESIGN_SYSTEM.md`** ⭐ NOVO
+    - Paleta de cores completa
+    - Efeitos visuais (glassmorphism, gradientes)
+    - Componentes base documentados
+    - Gráficos com tema dark
+    - Boas práticas de design
+
+14. **`PROGRESS.md`** ⭐ NOVO
+    - Histórico de desenvolvimento
+    - Estado atual do projeto
+    - Roadmap e próximos passos
+    - Métricas do projeto
+
+15. **`API_ROUTES.md`** ⭐ NOVO
+    - Todas as rotas da API documentadas
+    - Exemplos de uso
+    - Estruturas de request/response
+    - Configuração e autenticação
+
 ---
 
 ## 🎯 Por Onde Começar?
@@ -257,6 +276,8 @@ npm run preview
 ### ✅ Implementado
 
 - [x] Dashboard completo com métricas
+- [x] Tema dark elegante com glassmorphism
+- [x] Sistema de autenticação (login/logout)
 - [x] Funil de vendas visual
 - [x] Métricas de receita
 - [x] Métricas de conversão
@@ -265,10 +286,11 @@ npm run preview
 - [x] Comparações temporais
 - [x] Análise de produtos
 - [x] Filtros (período, vendedor, canal)
-- [x] Loading states
-- [x] Error handling
+- [x] Loading states elegantes
+- [x] Error handling robusto
 - [x] Responsive design
 - [x] Deploy no Railway
+- [x] Documentação completa
 
 ### ⏳ Planejado
 
@@ -309,6 +331,15 @@ npm run preview
 
 **...ver resumo completo:**
 → `RESUMO_COMPLETO.md`
+
+**...entender design system:**
+→ `DESIGN_SYSTEM.md`
+
+**...ver progresso do projeto:**
+→ `PROGRESS.md`
+
+**...consultar rotas da API:**
+→ `API_ROUTES.md`
 
 ---
 
@@ -354,9 +385,9 @@ npm run preview
 
 ## 📊 Status do Projeto
 
-**Versão:** 1.0.0  
+**Versão:** 1.1.0  
 **Status:** ✅ Funcional e em produção  
-**Última atualização:** Novembro 2024
+**Última atualização:** Janeiro 2025
 
 **Branches:**
 - `main` - Produção

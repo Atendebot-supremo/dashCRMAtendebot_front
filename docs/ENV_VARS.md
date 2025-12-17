@@ -7,8 +7,11 @@
 Crie um arquivo `.env` na raiz do projeto:
 
 ```env
-VITE_HELENA_API_URL=https://api.flw.chat
-VITE_HELENA_API_TOKEN=pn_mh3AGdH9Exo8PsLsEQjRvg80IB66FEOieyPJlKaCxk
+# URL base da API Backend (SEM /api no final)
+VITE_API_URL=https://dashcrmatendebotback-desenvolvimento.up.railway.app
+
+# Para desenvolvimento local:
+# VITE_API_URL=http://localhost:3000
 ```
 
 ### Railway (Produção)
@@ -82,11 +85,10 @@ Se encontrar "flw.chat", as variáveis foram injetadas ✅
 4. Frontend usa JWT para chamar backend
 5. Backend usa token Helena para chamar API
 
-**Quando Backend Estiver Pronto:**
+**Configuração Atual (Backend Implementado):**
 ```env
 # Frontend (.env)
-VITE_HELENA_API_URL=https://seu-backend.railway.app/api
-# Não precisa mais de VITE_HELENA_API_TOKEN
+VITE_API_URL=https://dashcrmatendebotback-desenvolvimento.up.railway.app
 
 # Backend (.env)
 HELENA_API_URL=https://api.flw.chat
@@ -98,19 +100,13 @@ JWT_SECRET=seu-secret-super-seguro
 
 ## 📝 Descrição das Variáveis
 
-### `VITE_HELENA_API_URL`
+### `VITE_API_URL`
 - **Tipo:** String (URL)
 - **Obrigatório:** Sim
-- **Descrição:** URL base da API Helena
-- **Valor Atual:** `https://api.flw.chat`
-- **Futuro:** `https://seu-backend.railway.app/api`
-
-### `VITE_HELENA_API_TOKEN`
-- **Tipo:** String (Bearer Token)
-- **Obrigatório:** Sim (temporariamente)
-- **Descrição:** Token permanente de autenticação da API Helena
-- **Valor:** `pn_mh3AGdH9Exo8PsLsEQjRvg80IB66FEOieyPJlKaCxk`
-- **Futuro:** Remover (token ficará apenas no backend)
+- **Descrição:** URL base da API Backend (sem `/api` no final)
+- **Valor Desenvolvimento:** `https://dashcrmatendebotback-desenvolvimento.up.railway.app`
+- **Valor Local:** `http://localhost:3000`
+- **Nota:** As rotas da API incluem `/api/` automaticamente (ex: `/api/auth/login`)
 
 ---
 
@@ -118,8 +114,11 @@ JWT_SECRET=seu-secret-super-seguro
 
 ### Criar arquivo .env local
 ```bash
-echo "VITE_HELENA_API_URL=https://api.flw.chat" > .env
-echo "VITE_HELENA_API_TOKEN=pn_mh3AGdH9Exo8PsLsEQjRvg80IB66FEOieyPJlKaCxk" >> .env
+# Desenvolvimento (Railway)
+echo "VITE_API_URL=https://dashcrmatendebotback-desenvolvimento.up.railway.app" > .env
+
+# Ou local
+echo "VITE_API_URL=http://localhost:3000" > .env
 ```
 
 ### Testar localmente
