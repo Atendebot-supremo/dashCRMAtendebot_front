@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Loader2, AlertCircle } from 'lucide-react'
+import { useQueryClient } from '@tanstack/react-query'
 import DashboardLayout from '@/components/dashboard/DashboardLayout'
 import FunilView from '@/components/funil/FunilView'
 import RevenueMetrics from '@/components/metrics/RevenueMetrics'
@@ -14,6 +15,7 @@ import { helenaClient } from '@/lib/api/helena-client'
 import type { DashboardFilters, GraphVisibility } from '@/types/crm'
 
 const DashboardPage = () => {
+  const queryClient = useQueryClient()
   const [filters, setFilters] = useState<DashboardFilters>({})
   const [graphVisibility, setGraphVisibility] = useState<GraphVisibility>(() => {
     // Carregar do localStorage ou usar padrão (todos visíveis)
@@ -107,6 +109,11 @@ const DashboardPage = () => {
     setGraphVisibility(visibility)
   }
 
+  const handleSyncData = () => {
+    // Invalidar todas as queries relacionadas ao dashboard para forçar nova busca
+    queryClient.invalidateQueries({ queryKey: ['crm'] })
+  }
+
   // Loading state
   if (isLoading && !cardsData.length) {
     return (
@@ -115,6 +122,7 @@ const DashboardPage = () => {
         onFiltersChange={handleFiltersChange}
         graphVisibility={graphVisibility}
         onGraphVisibilityChange={handleGraphVisibilityChange}
+        onSyncData={handleSyncData}
       >
         <div className="flex h-[60vh] items-center justify-center">
           <div className="flex flex-col items-center gap-4">
@@ -142,6 +150,7 @@ const DashboardPage = () => {
         onFiltersChange={handleFiltersChange}
         graphVisibility={graphVisibility}
         onGraphVisibilityChange={handleGraphVisibilityChange}
+        onSyncData={handleSyncData}
       >
         <div className="flex h-[60vh] items-center justify-center">
           <div className="flex flex-col items-center gap-4 max-w-md text-center">
@@ -170,6 +179,7 @@ const DashboardPage = () => {
       onFiltersChange={handleFiltersChange}
       graphVisibility={graphVisibility}
       onGraphVisibilityChange={handleGraphVisibilityChange}
+      onSyncData={handleSyncData}
     >
       {/* Métricas de Conversão */}
       {graphVisibility.conversionMetrics && (

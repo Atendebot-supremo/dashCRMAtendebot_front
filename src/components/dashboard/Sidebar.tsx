@@ -7,7 +7,8 @@ import {
   ChevronDown,
   Menu,
   Filter,
-  Eye
+  Eye,
+  RefreshCw
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { apiClient } from '@/lib/api/client'
@@ -20,6 +21,7 @@ interface SidebarProps {
   onFiltersChange: (filters: DashboardFilters) => void
   graphVisibility: GraphVisibility
   onGraphVisibilityChange: (visibility: GraphVisibility) => void
+  onSyncData?: () => void
 }
 
 const Sidebar = ({
@@ -27,6 +29,7 @@ const Sidebar = ({
   onFiltersChange,
   graphVisibility,
   onGraphVisibilityChange,
+  onSyncData,
 }: SidebarProps) => {
   const [user, setUser] = useState<AuthUser | null>(null)
   const [showUserMenu, setShowUserMenu] = useState(false)
@@ -109,6 +112,7 @@ const Sidebar = ({
                 onFiltersChange={onFiltersChange}
                 graphVisibility={graphVisibility}
                 onGraphVisibilityChange={onGraphVisibilityChange}
+                onSyncData={onSyncData}
                 onClose={() => setIsCollapsed(true)}
                 isMobile={true}
               />
@@ -136,6 +140,7 @@ const Sidebar = ({
           onFiltersChange={onFiltersChange}
           graphVisibility={graphVisibility}
           onGraphVisibilityChange={onGraphVisibilityChange}
+          onSyncData={onSyncData}
           isCollapsed={isCollapsed}
           isMobile={false}
         />
@@ -171,6 +176,7 @@ interface SidebarContentProps {
   onFiltersChange: (filters: DashboardFilters) => void
   graphVisibility: GraphVisibility
   onGraphVisibilityChange: (visibility: GraphVisibility) => void
+  onSyncData?: () => void
   isCollapsed?: boolean
   isMobile?: boolean
   onClose?: () => void
@@ -185,10 +191,25 @@ const SidebarContent = ({
   onFiltersChange,
   graphVisibility,
   onGraphVisibilityChange,
+  onSyncData,
   isCollapsed = false,
   isMobile = false,
   onClose,
 }: SidebarContentProps) => {
+  const [isSyncing, setIsSyncing] = useState(false)
+
+  const handleSync = async () => {
+    if (!onSyncData) return
+    
+    setIsSyncing(true)
+    try {
+      onSyncData()
+      // Pequeno delay para feedback visual
+      await new Promise(resolve => setTimeout(resolve, 500))
+    } finally {
+      setIsSyncing(false)
+    }
+  }
   return (
     <div className="flex flex-col h-full">
       {/* Header - Logo */}
@@ -260,6 +281,20 @@ const SidebarContent = ({
           </div>
         )}
       </div>
+
+      {/* Botão de Sincronização - Fixo acima dos filtros */}
+      {!isCollapsed && onSyncData && (
+        <div className="px-4 py-3 border-b border-gray-700/50">
+          <Button
+            onClick={handleSync}
+            disabled={isSyncing}
+            className="w-full h-10 bg-[#c8fa00]/10 hover:bg-[#c8fa00]/20 border border-[#c8fa00]/30 text-[#c8fa00] hover:text-[#c8fa00] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <RefreshCw className={`h-4 w-4 mr-2 ${isSyncing ? 'animate-spin' : ''}`} />
+            {isSyncing ? 'Sincronizando...' : 'Sincronizar Dados'}
+          </Button>
+        </div>
+      )}
 
       {/* Conteúdo Scrollável */}
       <div className="flex-1 overflow-y-auto">

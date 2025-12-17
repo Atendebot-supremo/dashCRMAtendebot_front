@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
-import { Calendar, Filter, RotateCcw } from 'lucide-react'
+import { Calendar, Filter, RotateCcw, ChevronDown } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { DateInput } from '@/components/ui/date-input'
+import { DatePicker } from '@/components/ui/date-picker'
 import {
   Select,
   SelectContent,
@@ -19,6 +19,8 @@ interface FiltersBarProps {
 }
 
 const FiltersBar = ({ filters, onFiltersChange }: FiltersBarProps) => {
+  // Estado para controlar se a seção está expandida
+  const [isExpanded, setIsExpanded] = useState(true)
   // Estado para controlar se usa período pré-definido ou data customizada
   const [dateMode, setDateMode] = useState<'preset' | 'custom'>('preset')
   
@@ -108,22 +110,33 @@ const FiltersBar = ({ filters, onFiltersChange }: FiltersBarProps) => {
   }
 
   return (
-    <div className="space-y-4">
-      {/* Header */}
-      <div className="flex items-center gap-2">
-        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#c8fa00]/10">
-          <Filter className="h-4 w-4 text-[#c8fa00]" />
+    <div className="space-y-3">
+      {/* Header - Clicável para expandir/colapsar */}
+      <button
+        onClick={() => setIsExpanded(!isExpanded)}
+        className="w-full flex items-center justify-between gap-2 hover:bg-gray-700/30 rounded-lg p-2 -m-2 transition-colors"
+      >
+        <div className="flex items-center gap-2">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#c8fa00]/10">
+            <Filter className="h-4 w-4 text-[#c8fa00]" />
+          </div>
+          <div className="text-left">
+            <h3 className="text-sm font-semibold text-white">Filtros</h3>
+            <p className="text-xs text-gray-500">Refine sua visualização</p>
+          </div>
         </div>
-        <div>
-          <h3 className="text-sm font-semibold text-white">Filtros</h3>
-          <p className="text-xs text-gray-500">Refine sua visualização</p>
-        </div>
-      </div>
+        <ChevronDown
+          className={`h-4 w-4 text-gray-400 transition-transform duration-200 flex-shrink-0 ${
+            isExpanded ? 'rotate-180' : ''
+          }`}
+        />
+      </button>
 
-      {/* Filters - Layout Vertical */}
-      <div className="space-y-4">
+      {/* Filters - Layout Vertical - Colapsável */}
+      {isExpanded && (
+        <div className="space-y-2.5">
         {/* Tipo de Filtro de Data */}
-        <div className="space-y-2">
+        <div className="space-y-1.5">
           <div className="flex items-center gap-2">
             <Calendar className="h-4 w-4 text-[#c8fa00]" />
             <label className="text-xs font-medium text-gray-400">Filtro de Data</label>
@@ -148,7 +161,7 @@ const FiltersBar = ({ filters, onFiltersChange }: FiltersBarProps) => {
 
         {/* Período Pré-definido ou Data Customizada */}
         {dateMode === 'preset' ? (
-          <div className="space-y-2">
+          <div className="space-y-1.5">
             <label className="text-xs font-medium text-gray-400">Período</label>
             <Select
               onValueChange={handlePeriodChange}
@@ -166,28 +179,30 @@ const FiltersBar = ({ filters, onFiltersChange }: FiltersBarProps) => {
             </Select>
           </div>
         ) : (
-          <div className="space-y-3">
-            <div className="space-y-2">
+          <div className="space-y-2">
+            <div className="space-y-1.5">
               <label className="text-xs font-medium text-gray-400">Data Início</label>
-              <DateInput
+              <DatePicker
                 value={filters.startDate || ''}
                 onChange={(value) => handleCustomDateChange('startDate', value)}
-                className="w-full h-10 bg-gray-700/50 border-gray-600/50 text-white placeholder:text-gray-500 focus:border-[#c8fa00] focus:ring-[#c8fa00]/20 transition-all"
+                placeholder="Selecione a data de início"
+                max={filters.endDate || undefined}
               />
             </div>
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               <label className="text-xs font-medium text-gray-400">Data Fim</label>
-              <DateInput
+              <DatePicker
                 value={filters.endDate || ''}
                 onChange={(value) => handleCustomDateChange('endDate', value)}
-                className="w-full h-10 bg-gray-700/50 border-gray-600/50 text-white placeholder:text-gray-500 focus:border-[#c8fa00] focus:ring-[#c8fa00]/20 transition-all"
+                placeholder="Selecione a data de fim"
+                min={filters.startDate || undefined}
               />
             </div>
           </div>
         )}
 
         {/* Usuário/Vendedor */}
-        <div className="space-y-2">
+        <div className="space-y-1.5">
           <label className="text-xs font-medium text-gray-400">Vendedor</label>
           <Select
             value={filters.userId || 'all'}
@@ -209,7 +224,7 @@ const FiltersBar = ({ filters, onFiltersChange }: FiltersBarProps) => {
         </div>
 
         {/* Canal */}
-        <div className="space-y-2">
+        <div className="space-y-1.5">
           <label className="text-xs font-medium text-gray-400">Canal</label>
           <Select
             value={filters.channelId || 'all'}
@@ -242,7 +257,8 @@ const FiltersBar = ({ filters, onFiltersChange }: FiltersBarProps) => {
           <RotateCcw className="h-4 w-4 mr-2" />
           Limpar Filtros
         </Button>
-      </div>
+        </div>
+      )}
     </div>
   )
 }

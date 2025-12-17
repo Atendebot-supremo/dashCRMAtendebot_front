@@ -1,4 +1,5 @@
-import { Target, DollarSign, TrendingUp, Users, AlertTriangle, Calendar, Package, Eye, EyeOff } from 'lucide-react'
+import { useState } from 'react'
+import { Target, DollarSign, TrendingUp, Users, AlertTriangle, Calendar, Package, Eye, EyeOff, ChevronDown } from 'lucide-react'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Button } from '@/components/ui/button'
 import type { GraphVisibility } from '@/types/crm'
@@ -57,6 +58,7 @@ const GraphVisibilityControls = ({
   visibility,
   onVisibilityChange,
 }: GraphVisibilityControlsProps) => {
+  const [isExpanded, setIsExpanded] = useState(true)
   const allVisible = Object.values(visibility).every((v) => v)
   const allHidden = Object.values(visibility).every((v) => !v)
 
@@ -95,43 +97,60 @@ const GraphVisibilityControls = ({
 
   return (
     <div className="space-y-4">
-      {/* Header */}
-      <div className="flex items-center justify-between">
+      {/* Header - Clicável para expandir/colapsar */}
+      <button
+        onClick={() => setIsExpanded(!isExpanded)}
+        className="w-full flex items-center justify-between gap-2 hover:bg-gray-700/30 rounded-lg p-2 -m-2 transition-colors"
+      >
         <div className="flex items-center gap-2">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#c8fa00]/10">
             <Eye className="h-4 w-4 text-[#c8fa00]" />
           </div>
-          <div>
+          <div className="text-left">
             <h3 className="text-sm font-semibold text-white">Gráficos</h3>
             <p className="text-xs text-gray-500">Mostrar/Ocultar</p>
           </div>
         </div>
-        <div className="flex gap-1">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleShowAll}
-            disabled={allVisible}
-            className="h-7 px-2 text-xs text-gray-400 hover:text-white hover:bg-gray-700/50 disabled:opacity-50"
-            title="Mostrar todos"
-          >
-            <Eye className="h-3 w-3" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleHideAll}
-            disabled={allHidden}
-            className="h-7 px-2 text-xs text-gray-400 hover:text-white hover:bg-gray-700/50 disabled:opacity-50"
-            title="Ocultar todos"
-          >
-            <EyeOff className="h-3 w-3" />
-          </Button>
+        <div className="flex items-center gap-1">
+          <div className="flex gap-1">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={(e) => {
+                e.stopPropagation()
+                handleShowAll()
+              }}
+              disabled={allVisible}
+              className="h-7 px-2 text-xs text-gray-400 hover:text-white hover:bg-gray-700/50 disabled:opacity-50"
+              title="Mostrar todos"
+            >
+              <Eye className="h-3 w-3" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={(e) => {
+                e.stopPropagation()
+                handleHideAll()
+              }}
+              disabled={allHidden}
+              className="h-7 px-2 text-xs text-gray-400 hover:text-white hover:bg-gray-700/50 disabled:opacity-50"
+              title="Ocultar todos"
+            >
+              <EyeOff className="h-3 w-3" />
+            </Button>
+          </div>
+          <ChevronDown
+            className={`h-4 w-4 text-gray-400 transition-transform duration-200 flex-shrink-0 ${
+              isExpanded ? 'rotate-180' : ''
+            }`}
+          />
         </div>
-      </div>
+      </button>
 
-      {/* Checkboxes */}
-      <div className="space-y-2">
+      {/* Checkboxes - Colapsável */}
+      {isExpanded && (
+        <div className="space-y-2">
         {graphTypes.map((graph) => {
           const Icon = graph.icon
           const isChecked = visibility[graph.key]
@@ -160,7 +179,8 @@ const GraphVisibilityControls = ({
             </label>
           )
         })}
-      </div>
+        </div>
+      )}
     </div>
   )
 }

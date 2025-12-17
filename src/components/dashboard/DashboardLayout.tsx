@@ -8,6 +8,7 @@ interface DashboardLayoutProps {
   onFiltersChange: (filters: DashboardFilters) => void
   graphVisibility: GraphVisibility
   onGraphVisibilityChange: (visibility: GraphVisibility) => void
+  onSyncData?: () => void
 }
 
 const DashboardLayout = ({
@@ -16,6 +17,7 @@ const DashboardLayout = ({
   onFiltersChange,
   graphVisibility,
   onGraphVisibilityChange,
+  onSyncData,
 }: DashboardLayoutProps) => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex">
@@ -33,6 +35,7 @@ const DashboardLayout = ({
         onFiltersChange={onFiltersChange}
         graphVisibility={graphVisibility}
         onGraphVisibilityChange={onGraphVisibilityChange}
+        onSyncData={onSyncData}
       />
 
       {/* Main Content */}
