@@ -5,6 +5,69 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/),
 e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
+## [1.3.0] - 2025-01-18
+
+### 📝 Documentação
+- CHANGELOG atualizado com versão 1.3.0
+- PROGRESS.md atualizado com novas funcionalidades
+- RESUMO_COMPLETO.md atualizado com funcionalidades atuais
+- Seção de funcionalidades do dashboard adicionada
+
+### ✨ Adicionado
+
+#### Análise de Produtos/Serviços Dinâmica
+- Componente `ProductAnalysis` agora usa campos dinâmicos do `customFields`
+- Campo `produto-servi-o` extraído dinamicamente de cada card
+- Campo `faturamento` usado para calcular receita (com fallback para `monetaryAmount`)
+- Suporte para valores de faturamento em formato string (ex: "R$ 1.000,00") e número
+- Logs de debug detalhados para análise de produtos encontrados
+
+#### Gráfico de Receita por Produto Melhorado
+- Substituição do gráfico de barras por cards em grid responsivo
+- Cards com efeitos hover elegantes (borda verde, gradiente de fundo)
+- Layout responsivo: 2 colunas (mobile) até 5 colunas (desktop)
+- Ícones e transições suaves
+- Estilo consistente com outros gráficos da página (Receita por Vendedor, Receita por Canal)
+
+#### Comparação Temporal - Mês a Mês
+- Gráfico de linha para comparação mensal de leads
+- Mensagem informativa quando há apenas 1 mês de dados
+- Logs detalhados para análise de distribuição de cards por mês
+- Confirmação de uso de `createdAt` (data de criação) para agregação
+
+### 🔧 Melhorado
+
+#### Logs de Debug
+- Logs adicionados em `ProductAnalysis` para rastrear produtos encontrados
+- Logs em `TemporalComparison` mostrando distribuição de cards por mês
+- Logs em `helena-client.ts` mostrando cards por mês de criação
+- Logs estruturados com emojis para fácil identificação:
+  - 📦 Produtos
+  - 📅 Datas/Temporal
+  - 🎴 Cards
+
+#### Tratamento de Valores
+- Conversão inteligente de valores de faturamento (string para número)
+- Remoção automática de caracteres não numéricos (R$, espaços, etc.)
+- Fallback para `monetaryAmount` quando `faturamento` não está disponível
+
+### 🗑️ Removido
+
+#### Gráficos Redundantes
+- Removido gráfico de "Taxa de Conversão por Produto"
+- Removido gráfico de "Ticket Médio por Produto"
+- Mantido apenas gráfico de receita e tabela de ranking (mais focado e limpo)
+
+#### Gráficos de Comparação Temporal
+- Removido gráfico "Comparação Mês a Mês - Quantidade de Leads" (duplicado)
+- Removido gráfico "Comparação Mês a Mês - Valores"
+- Removido gráfico "Comparação Mês a Mês - Leads e Valores"
+- Removido gráfico "Comparação Semanal - Últimas 12 Semanas"
+- Removidos cards de resumo (Total de Leads, Valor Total, Ticket Médio, Média Mensal)
+- Mantido apenas gráfico de linha "Comparação Mês a Mês - Quantidade de Leads"
+
+---
+
 ## [1.2.0] - 2025-01-17
 
 ### ✨ Adicionado
@@ -293,4 +356,4 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ---
 
-**Última atualização:** Janeiro 2025
+**Última atualização:** 18 de Janeiro de 2025

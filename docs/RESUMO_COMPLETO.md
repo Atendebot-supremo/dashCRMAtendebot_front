@@ -445,14 +445,140 @@ Você agora tem:
 
 **Projeto:** dashCRMAtendebot  
 **Data:** Janeiro 2025  
-**Versão:** 1.2.0  
-**Status:** ✅ Dashboard em Produção - Sidebar e Correções Implementadas  
+**Versão:** 1.3.0  
+**Status:** ✅ Dashboard em Produção - Análise de Produtos e Comparação Temporal Melhoradas  
 **Repositório:** https://github.com/Atendebot-supremo/dashCRMAtendebot_front  
 **Última atualização:** Janeiro 2025
 
 ---
 
-## 🎨 Mudanças Recentes (v1.2.0)
+## 🎯 Funcionalidades Atuais do Dashboard (v1.3.0)
+
+### Componentes de Métricas Implementados
+
+#### 1. Métricas de Conversão (`ConversionMetrics`)
+- Taxa de conversão geral
+- Ciclo médio de vendas
+- Tempo médio de resposta
+- Cards de resumo com glassmorphism
+
+#### 2. Métricas de Receita (`RevenueMetrics`)
+- Receita total
+- Ticket médio
+- Vendas fechadas
+- Cards em grid para receita por vendedor
+- Cards em grid para receita por canal
+
+#### 3. Funil de Vendas (`FunilView`)
+- Gráfico de barras horizontal com todas as etapas
+- Cards clicáveis com valores por etapa
+- Tabela detalhada de métricas
+- Modal com lista de cards ao clicar em etapa
+- Hover effects customizados (barra verde, label verde)
+
+#### 4. Performance por Vendedor (`SellerPerformance`)
+- Ranking de cards por vendedor (top 10)
+- Medalhas para top 3 (ouro, prata, bronze)
+- Tabela detalhada com ranking
+- Cards fechados definidos como `stepPhase === 'FINAL'` ou `monetaryAmount > 0`
+
+#### 5. Análise de Perdas (`LossAnalysis`)
+- Cards filtrados por etapa "Perdido"
+- Total de valor perdido
+- Total de cards perdidos
+- Valor médio por lead
+- Ranking top 5 de leads perdidos (incluindo sem valor monetário)
+- Cards de resumo com cores temáticas
+
+#### 6. Comparação Temporal (`TemporalComparison`)
+- Gráfico de linha mês a mês (quantidade de leads)
+- Agregação baseada em `createdAt` (data de criação)
+- Mensagem informativa quando há apenas 1 mês
+- Logs detalhados de distribuição por mês
+
+#### 7. Análise de Produtos (`ProductAnalysis`)
+- **Campos dinâmicos**: `customFields['produto-servi-o']` e `customFields['faturamento']`
+- Cards em grid responsivo (2-5 colunas)
+- Efeitos hover elegantes
+- Tabela de ranking completa
+- Conversão inteligente de valores (string para número)
+- Fallback para `monetaryAmount` quando `faturamento` não disponível
+
+### Sistema de Filtros
+
+#### Filtros Disponíveis
+- **Período**: Hoje, Esta Semana, Este Mês, Este Ano, Data Customizada
+- **Vendedor**: Lista dinâmica extraída de `card.responsibleUser`
+- **Canal**: Lista dinâmica extraída de `card.customFields['origem-11']`
+- **Date Picker**: Modal com calendário para seleção de datas
+- **Reset**: Botão para limpar todos os filtros
+
+#### Filtros Colapsáveis
+- Seção de filtros com accordion (expandir/colapsar)
+- Seção de visibilidade de gráficos com accordion
+- Estado persistido no localStorage
+
+### Sidebar Colapsável
+
+#### Funcionalidades
+- Largura ajustável (320px expandida, 64px colapsada)
+- Header com logo e perfil do usuário
+- Botão de sincronização de dados (fixo acima dos filtros)
+- Filtros integrados
+- Controles de visibilidade de gráficos
+- Estado persistido no localStorage
+- Responsividade: drawer overlay no mobile, sidebar fixa no desktop
+
+### Logs de Debug
+
+#### Componentes com Logs
+- `helena-client.ts`: Logs de requisições, paginação, distribuição por mês
+- `queries.ts`: Logs de status de carregamento
+- `calculations.ts`: Logs de agregação e cálculos
+- `ProductAnalysis.tsx`: Logs de produtos encontrados
+- `TemporalComparison.tsx`: Logs de distribuição por mês
+- `DashboardPage.tsx`: Logs de carregamento de etapas
+
+#### Emojis de Identificação
+- 📋 Painéis
+- 🎴 Cards
+- 👥 Agentes/Vendedores
+- 📊 Métricas
+- 📦 Produtos
+- 📅 Datas/Temporal
+- ✅ Sucesso
+- ⚠️ Avisos
+- ❌ Erros
+
+---
+
+## 🎨 Mudanças Recentes (v1.3.0)
+
+### Análise de Produtos/Serviços Dinâmica
+- Componente `ProductAnalysis` agora usa campos dinâmicos do `customFields`
+- Campo `produto-servi-o` extraído dinamicamente de cada card
+- Campo `faturamento` usado para calcular receita (com fallback para `monetaryAmount`)
+- Suporte para valores de faturamento em formato string (ex: "R$ 1.000,00") e número
+- Gráfico de receita substituído por cards em grid responsivo e elegante
+- Removidos gráficos redundantes (conversão e ticket médio)
+- Logs de debug detalhados para análise de produtos encontrados
+
+### Comparação Temporal Simplificada
+- Gráfico de linha mês a mês para comparação de leads
+- Mensagem informativa quando há apenas 1 mês de dados
+- Removidos gráficos redundantes e cards de resumo
+- Logs detalhados mostrando distribuição de cards por mês
+- Confirmação de uso de `createdAt` (data de criação) para agregação
+
+### Melhorias Gerais
+- Logs de debug expandidos em múltiplos componentes
+- Tratamento robusto de valores de faturamento
+- Consistência visual com outros gráficos da página
+- Cards em grid com efeitos hover elegantes
+
+---
+
+## 🎨 Mudanças Anteriores (v1.2.0)
 
 ### Sidebar Colapsável
 - Sidebar lateral com largura ajustável (320px expandida, 64px colapsada)
