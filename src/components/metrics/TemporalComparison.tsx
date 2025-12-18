@@ -1,8 +1,7 @@
 import { useMemo } from 'react'
-import { Calendar, TrendingUp, BarChart3 } from 'lucide-react'
+import { Calendar, TrendingUp } from 'lucide-react'
 import ChartCard from '@/components/dashboard/ChartCard'
 import LineChart from '@/components/charts/LineChart'
-import BarChart from '@/components/charts/BarChart'
 import { useCards } from '@/lib/api/queries'
 import { aggregateByPeriod } from '@/lib/utils/calculations'
 import {
@@ -15,6 +14,31 @@ import type { DashboardFilters, Card } from '@/types/crm'
 interface TemporalComparisonProps {
   filters?: DashboardFilters
 }
+
+// Função para formatar período mensal (2024-12 -> Dez/2024)
+const formatMonthPeriod = (period: string): string => {
+  try {
+    const [year, month] = period.split('-')
+    if (!year || !month) {
+      console.warn('⚠️ [TemporalComparison] Formato de período inválido:', period)
+      return period
+    }
+    const monthNames = [
+      'Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun',
+      'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'
+    ]
+    const monthIndex = parseInt(month, 10) - 1
+    if (monthIndex < 0 || monthIndex >= 12) {
+      console.warn('⚠️ [TemporalComparison] Mês inválido:', month)
+      return period
+    }
+    return `${monthNames[monthIndex]}/${year}`
+  } catch (error) {
+    console.error('❌ [TemporalComparison] Erro ao formatar período:', period, error)
+    return period
+  }
+}
+
 
 const TemporalComparison = ({ filters }: TemporalComparisonProps) => {
   const { data: cards = [], isLoading, isError } = useCards(filters)
@@ -41,27 +65,82 @@ const TemporalComparison = ({ filters }: TemporalComparisonProps) => {
     return filtered
   }, [cards, filters])
 
+  // Dados mensais para o gráfico - BASEADO EM createdAt (data de criação)
   const monthlyData = useMemo(() => {
+    console.log('📅 [TemporalComparison] ==========================================')
+    console.log('📅 [TemporalComparison] Agregando por MÊS usando createdAt (data de criação)')
+    console.log('📅 [TemporalComparison] Cards filtrados:', filteredCards.length)
+    console.log('📅 [TemporalComparison] Filtros aplicados:', {
+      startDate: filters?.startDate,
+      endDate: filters?.endDate,
+      userId: filters?.userId,
+      channelId: filters?.channelId,
+    })
+    
+    // Verificar se há cards sem createdAt
+    const cardsWithoutDate = filteredCards.filter(card => !card.createdAt)
+    if (cardsWithoutDate.length > 0) {
+      console.warn(`⚠️ [TemporalComparison] ${cardsWithoutDate.length} cards sem createdAt serão ignorados`)
+    }
+    
+    // Log de alguns cards para verificar as datas de criação
+    if (filteredCards.length > 0) {
+      const cardsWithDate = filteredCards.filter(card => card.createdAt)
+      const sampleCards = cardsWithDate.slice(0, 10).map(card => {
+        const date = new Date(card.createdAt!)
+        return {
+          id: card.id,
+          title: card.title,
+          createdAt: card.createdAt,
+          year: date.getFullYear(),
+          month: date.getMonth() + 1,
+          monthName: date.toLocaleString('pt-BR', { month: 'long', year: 'numeric' }),
+        }
+      })
+      console.log('📅 [TemporalComparison] Exemplo de cards com datas de criação (primeiros 10):', sampleCards)
+      
+      // Verificar distribuição de meses - TODOS OS CARDS
+      const monthDistribution: Record<string, number> = {}
+      const allDates: string[] = []
+      filteredCards.forEach(card => {
+        if (card.createdAt) {
+          const date = new Date(card.createdAt)
+          const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
+          monthDistribution[key] = (monthDistribution[key] || 0) + 1
+          allDates.push(card.createdAt)
+        }
+      })
+      console.log('📅 [TemporalComparison] Distribuição de cards por mês (antes da agregação):', monthDistribution)
+      console.log('📅 [TemporalComparison] Total de cards com data:', cardsWithDate.length)
+      console.log('📅 [TemporalComparison] Total de meses únicos encontrados:', Object.keys(monthDistribution).length)
+      
+      // Mostrar a data mais antiga e mais recente
+      if (allDates.length > 0) {
+        const sortedDates = allDates.sort()
+        console.log('📅 [TemporalComparison] Data mais antiga:', sortedDates[0])
+        console.log('📅 [TemporalComparison] Data mais recente:', sortedDates[sortedDates.length - 1])
+      }
+    }
+    
     const aggregated = aggregateByPeriod(filteredCards, 'month')
-    return Object.entries(aggregated)
-      .map(([period, data]) => ({
-        period,
-        leads: data.count,
-        value: data.value,
-      }))
+    console.log('📅 [TemporalComparison] Dados agregados (RAW):', JSON.stringify(aggregated, null, 2))
+    
+    const data = Object.entries(aggregated)
+      .map(([period, data]) => {
+        const formatted = formatMonthPeriod(period)
+        console.log(`📅 [TemporalComparison] Período: ${period} -> ${formatted}, Leads: ${data.count}`)
+        return {
+          period,
+          periodFormatted: formatted,
+          leads: data.count,
+        }
+      })
       .sort((a, b) => a.period.localeCompare(b.period))
-  }, [filteredCards])
-
-  const weeklyData = useMemo(() => {
-    const aggregated = aggregateByPeriod(filteredCards, 'week')
-    return Object.entries(aggregated)
-      .map(([period, data]) => ({
-        period,
-        leads: data.count,
-        value: data.value,
-      }))
-      .sort((a, b) => a.period.localeCompare(b.period))
-      .slice(-12)
+    
+    console.log('📅 [TemporalComparison] Dados finais para o gráfico:', JSON.stringify(data, null, 2))
+    console.log('📅 [TemporalComparison] Total de períodos:', data.length)
+    
+    return data
   }, [filteredCards])
 
   if (isLoading) {
@@ -99,74 +178,58 @@ const TemporalComparison = ({ filters }: TemporalComparisonProps) => {
     )
   }
 
-  return (
-    <div className="space-y-6">
-      {/* Gráfico Mensal - Leads */}
+  // Se houver apenas 1 ponto, mostrar mensagem informativa
+  if (monthlyData.length === 1) {
+    const singleData = monthlyData[0]
+    return (
       <ChartCard 
         title="Comparação Mês a Mês - Quantidade de Leads"
         icon={<TrendingUp className="h-4 w-4 text-[#c8fa00]" />}
       >
-        <LineChart
-          data={monthlyData}
-          dataKey="period"
-          lines={[
-            {
-              key: 'leads',
-              name: 'Leads',
-              color: '#c8fa00',
-            },
-          ]}
-          xAxisKey="period"
-          height={300}
-        />
+        <div className="flex flex-col items-center justify-center py-12">
+          <div className="text-center space-y-4">
+            <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-[#c8fa00]/10 border-2 border-[#c8fa00]/30">
+              <TrendingUp className="h-10 w-10 text-[#c8fa00]" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-white mb-2">{singleData.leads}</p>
+              <p className="text-sm text-gray-400">Leads em {singleData.periodFormatted}</p>
+            </div>
+            <p className="text-xs text-gray-500 max-w-md">
+              Para visualizar o gráfico de linha, é necessário ter dados de pelo menos 2 meses diferentes.
+            </p>
+          </div>
+        </div>
       </ChartCard>
+    )
+  }
 
-      {/* Gráfico Mensal - Valores */}
-      <ChartCard 
-        title="Comparação Mês a Mês - Valores"
-        icon={<BarChart3 className="h-4 w-4 text-[#c8fa00]" />}
-      >
-        <BarChart
-          data={monthlyData}
-          bars={[
-            {
-              key: 'value',
-              name: 'Valor (R$)',
-              color: '#10b981',
-            },
-          ]}
-          xAxisKey="period"
-          height={300}
-        />
-      </ChartCard>
+  const chartData = monthlyData.map(item => ({
+    name: item.periodFormatted,
+    leads: item.leads,
+  }))
 
-      {/* Gráfico Semanal */}
-      {weeklyData.length > 0 && (
-        <ChartCard 
-          title="Comparação Semanal - Últimas 12 Semanas"
-          icon={<Calendar className="h-4 w-4 text-[#c8fa00]" />}
-        >
-          <LineChart
-            data={weeklyData}
-            dataKey="period"
-            lines={[
-              {
-                key: 'leads',
-                name: 'Leads',
-                color: '#c8fa00',
-              },
-              {
-                key: 'value',
-                name: 'Valor (R$)',
-                color: '#3b82f6',
-              },
-            ]}
-            xAxisKey="period"
-            height={300}
-          />
-        </ChartCard>
-      )}
-    </div>
+  console.log('📅 [TemporalComparison] Dados formatados para o gráfico:', JSON.stringify(chartData, null, 2))
+
+  return (
+    <ChartCard 
+      title="Comparação Mês a Mês - Quantidade de Leads"
+      icon={<TrendingUp className="h-4 w-4 text-[#c8fa00]" />}
+    >
+      <LineChart
+        data={chartData}
+        dataKey="name"
+        lines={[
+          {
+            key: 'leads',
+            name: 'Leads',
+            color: '#c8fa00',
+          },
+        ]}
+        xAxisKey="name"
+        height={400}
+      />
+    </ChartCard>
   )
 }
 

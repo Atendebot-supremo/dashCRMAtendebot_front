@@ -301,10 +301,28 @@ export const aggregateByPeriod = (
     { count: number; value: number }
   > = {}
 
-  cards.forEach((card) => {
-    if (!card.createdAt) return
+  console.log(`📊 [aggregateByPeriod] Agregando ${cards.length} cards por período: ${period}`)
+
+  cards.forEach((card, index) => {
+    if (!card.createdAt) {
+      if (index < 5) console.log(`⚠️ [aggregateByPeriod] Card ${index} sem createdAt:`, card.id)
+      return
+    }
 
     const date = new Date(card.createdAt)
+    
+    // Log dos primeiros 5 cards para debug
+    if (index < 5) {
+      console.log(`📅 [aggregateByPeriod] Card ${index}:`, {
+        id: card.id,
+        createdAt: card.createdAt,
+        dateObject: date.toISOString(),
+        year: date.getFullYear(),
+        month: date.getMonth() + 1,
+        monthName: date.toLocaleString('pt-BR', { month: 'long' }),
+      })
+    }
+    
     let key: string
 
     switch (period) {
@@ -317,7 +335,12 @@ export const aggregateByPeriod = (
         key = weekStart.toISOString().split('T')[0]
         break
       case 'month':
-        key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
+        const year = date.getFullYear()
+        const month = date.getMonth() + 1
+        key = `${year}-${String(month).padStart(2, '0')}`
+        if (index < 5) {
+          console.log(`📅 [aggregateByPeriod] Card ${index} - Chave gerada: ${key} (${year}-${month})`)
+        }
         break
       default:
         key = date.toISOString().split('T')[0]
@@ -328,8 +351,11 @@ export const aggregateByPeriod = (
     }
 
     aggregated[key].count += 1
-    aggregated[key].value += card.value || 0
+    aggregated[key].value += card.monetaryAmount || 0
   })
+
+  console.log(`📊 [aggregateByPeriod] Resultado da agregação:`, JSON.stringify(aggregated, null, 2))
+  console.log(`📊 [aggregateByPeriod] Total de períodos únicos: ${Object.keys(aggregated).length}`)
 
   return aggregated
 }

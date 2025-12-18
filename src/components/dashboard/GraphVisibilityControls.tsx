@@ -98,9 +98,16 @@ const GraphVisibilityControls = ({
   return (
     <div className="space-y-4">
       {/* Header - Clicável para expandir/colapsar */}
-      <button
+      <div
         onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full flex items-center justify-between gap-2 hover:bg-gray-700/30 rounded-lg p-2 -m-2 transition-colors"
+        className="w-full flex items-center justify-between gap-2 hover:bg-gray-700/30 rounded-lg p-2 -m-2 transition-colors cursor-pointer"
+        role="button"
+        tabIndex={0}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            setIsExpanded(!isExpanded)
+          }
+        }}
       >
         <div className="flex items-center gap-2">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#c8fa00]/10">
@@ -146,7 +153,7 @@ const GraphVisibilityControls = ({
             }`}
           />
         </div>
-      </button>
+      </div>
 
       {/* Checkboxes - Colapsável */}
       {isExpanded && (

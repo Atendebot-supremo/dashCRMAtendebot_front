@@ -28,6 +28,10 @@ const LineChart = ({
   xAxisKey = 'name',
   height = 300,
 }: LineChartProps) => {
+  console.log('📈 [LineChart] Dados recebidos:', data)
+  console.log('📈 [LineChart] xAxisKey:', xAxisKey)
+  console.log('📈 [LineChart] lines:', lines)
+  
   const colors = [
     '#c8fa00',
     '#10b981',
@@ -35,6 +39,15 @@ const LineChart = ({
     '#8b5cf6',
     '#f59e0b',
   ]
+
+  if (!data || data.length === 0) {
+    console.warn('⚠️ [LineChart] Nenhum dado fornecido')
+    return (
+      <div className="flex items-center justify-center h-full text-gray-400">
+        Nenhum dado disponível
+      </div>
+    )
+  }
 
   return (
     <ResponsiveContainer width="100%" height={height}>

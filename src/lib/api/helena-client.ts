@@ -250,6 +250,26 @@ export const helenaClient = {
       cardsByStep[step] = (cardsByStep[step] || 0) + 1
     })
     console.log('🎴 [API] Cards por etapa:', JSON.stringify(cardsByStep, null, 2))
+    
+    // Agrupar cards por mês de criação para debug
+    const cardsByMonth: Record<string, number> = {}
+    const allDates: string[] = []
+    allCards.forEach(card => {
+      if (card.createdAt) {
+        const date = new Date(card.createdAt)
+        const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
+        cardsByMonth[key] = (cardsByMonth[key] || 0) + 1
+        allDates.push(card.createdAt)
+      }
+    })
+    console.log('🎴 [API] Cards por mês de criação:', JSON.stringify(cardsByMonth, null, 2))
+    if (allDates.length > 0) {
+      const sortedDates = allDates.sort()
+      console.log('🎴 [API] Data de criação mais antiga:', sortedDates[0])
+      console.log('🎴 [API] Data de criação mais recente:', sortedDates[sortedDates.length - 1])
+      console.log('🎴 [API] Total de meses únicos:', Object.keys(cardsByMonth).length)
+    }
+    
     console.log('🎴 [API] ==========================================')
     
     // Retornar todos os cards como se fosse uma única página

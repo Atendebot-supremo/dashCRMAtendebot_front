@@ -1,7 +1,6 @@
 import { useMemo } from 'react'
-import { Package, TrendingUp, Target, Clock, TableIcon } from 'lucide-react'
+import { Package, TrendingUp, TableIcon } from 'lucide-react'
 import ChartCard from '@/components/dashboard/ChartCard'
-import BarChart from '@/components/charts/BarChart'
 import { useCards } from '@/lib/api/queries'
 import {
   filterCardsByPeriod,
@@ -43,6 +42,10 @@ const ProductAnalysis = ({ filters }: ProductAnalysisProps) => {
   }, [cards, filters])
 
   const productMetrics = useMemo(() => {
+    console.log('📦 [ProductAnalysis] ==========================================')
+    console.log('📦 [ProductAnalysis] Analisando produtos/serviços')
+    console.log('📦 [ProductAnalysis] Total de cards filtrados:', filteredCards.length)
+    
     const metrics: Record<
       string,
       {
@@ -56,8 +59,13 @@ const ProductAnalysis = ({ filters }: ProductAnalysisProps) => {
       }
     > = {}
 
+    // Contar produtos únicos
+    const productsFound = new Set<string>()
+    
     filteredCards.forEach((card) => {
-      const product = card.product || 'Sem produto'
+      // Usar customFields['produto-servi-o'] para o nome do produto
+      const product = (card.customFields?.['produto-servi-o'] as string) || 'Sem produto/serviço'
+      productsFound.add(product)
       
       if (!metrics[product]) {
         metrics[product] = {
@@ -73,9 +81,33 @@ const ProductAnalysis = ({ filters }: ProductAnalysisProps) => {
 
       metrics[product].totalCards += 1
 
-      if (card.status === 'closed' || card.status === 'concluido') {
+      // Considerar cards fechados: stepPhase === 'FINAL' ou com monetaryAmount > 0
+      const isClosed = card.stepPhase === 'FINAL' || (card.monetaryAmount && card.monetaryAmount > 0)
+      
+      if (isClosed) {
         metrics[product].closedCards += 1
-        metrics[product].totalRevenue += card.value || 0
+        
+        // Usar customFields['faturamento'] se disponível, senão usar monetaryAmount
+        const faturamento = card.customFields?.['faturamento']
+        let revenue = 0
+        
+        if (faturamento) {
+          // Se faturamento é uma string, tentar converter para número
+          if (typeof faturamento === 'string') {
+            // Remover caracteres não numéricos (R$, espaços, pontos, vírgulas)
+            const cleaned = faturamento.replace(/[^\d,.-]/g, '').replace(',', '.')
+            revenue = parseFloat(cleaned) || 0
+          } else if (typeof faturamento === 'number') {
+            revenue = faturamento
+          }
+        }
+        
+        // Se não tiver faturamento, usar monetaryAmount
+        if (revenue === 0) {
+          revenue = card.monetaryAmount || 0
+        }
+        
+        metrics[product].totalRevenue += revenue
 
         if (card.createdAt && card.updatedAt) {
           const days = calculateDaysBetween(card.createdAt, card.updatedAt)
@@ -99,29 +131,26 @@ const ProductAnalysis = ({ filters }: ProductAnalysisProps) => {
           : 0
     })
 
-    return Object.values(metrics)
+    const sortedMetrics = Object.values(metrics)
       .sort((a, b) => b.totalRevenue - a.totalRevenue)
       .slice(0, 10)
+    
+    console.log('📦 [ProductAnalysis] Produtos únicos encontrados:', Array.from(productsFound))
+    console.log('📦 [ProductAnalysis] Métricas calculadas:', sortedMetrics.map(m => ({
+      produto: m.name,
+      totalCards: m.totalCards,
+      closedCards: m.closedCards,
+      totalRevenue: m.totalRevenue,
+    })))
+    console.log('📦 [ProductAnalysis] ==========================================')
+    
+    return sortedMetrics
   }, [filteredCards])
 
   const revenueChartData = useMemo(() => {
     return productMetrics.map((metric) => ({
       name: metric.name,
       revenue: metric.totalRevenue,
-    }))
-  }, [productMetrics])
-
-  const conversionChartData = useMemo(() => {
-    return productMetrics.map((metric) => ({
-      name: metric.name,
-      conversion: metric.conversionRate,
-    }))
-  }, [productMetrics])
-
-  const ticketChartData = useMemo(() => {
-    return productMetrics.map((metric) => ({
-      name: metric.name,
-      ticket: metric.averageTicket,
     }))
   }, [productMetrics])
 
@@ -162,61 +191,32 @@ const ProductAnalysis = ({ filters }: ProductAnalysisProps) => {
 
   return (
     <div className="space-y-6">
-      {/* Gráfico de Receita por Produto */}
+      {/* Cards de Receita por Produto/Serviço */}
       <ChartCard 
         title="Receita por Produto/Serviço"
         icon={<TrendingUp className="h-4 w-4 text-[#c8fa00]" />}
       >
-        <BarChart
-          data={revenueChartData}
-          bars={[
-            {
-              key: 'revenue',
-              name: 'Receita (R$)',
-              color: '#c8fa00',
-            },
-          ]}
-          xAxisKey="name"
-          height={300}
-        />
-      </ChartCard>
-
-      {/* Gráfico de Taxa de Conversão */}
-      <ChartCard 
-        title="Taxa de Conversão por Produto"
-        icon={<Target className="h-4 w-4 text-[#c8fa00]" />}
-      >
-        <BarChart
-          data={conversionChartData}
-          bars={[
-            {
-              key: 'conversion',
-              name: 'Taxa de Conversão (%)',
-              color: '#10b981',
-            },
-          ]}
-          xAxisKey="name"
-          height={300}
-        />
-      </ChartCard>
-
-      {/* Gráfico de Ticket Médio */}
-      <ChartCard 
-        title="Ticket Médio por Produto"
-        icon={<Clock className="h-4 w-4 text-[#c8fa00]" />}
-      >
-        <BarChart
-          data={ticketChartData}
-          bars={[
-            {
-              key: 'ticket',
-              name: 'Ticket Médio (R$)',
-              color: '#3b82f6',
-            },
-          ]}
-          xAxisKey="name"
-          height={300}
-        />
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+          {revenueChartData.map((item, index) => (
+            <div 
+              key={index}
+              className="group relative p-4 rounded-xl bg-gray-700/30 border border-gray-600/30 hover:border-[#c8fa00]/30 transition-all duration-300"
+            >
+              <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-[#c8fa00]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+              <div className="relative z-10">
+                <div className="flex items-center gap-2 mb-2">
+                  <Package className="h-4 w-4 text-[#c8fa00] flex-shrink-0" />
+                  <p className="text-xs text-gray-400 truncate group-hover:text-[#c8fa00] transition-colors" title={item.name}>
+                    {item.name}
+                  </p>
+                </div>
+                <p className="text-lg font-bold text-white group-hover:text-[#c8fa00] transition-colors">
+                  {formatCurrency(item.revenue)}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
       </ChartCard>
 
       {/* Tabela de Ranking */}
