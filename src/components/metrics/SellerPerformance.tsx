@@ -50,6 +50,9 @@ const SellerPerformance = ({ filters }: SellerPerformanceProps) => {
     > = {}
 
     filteredCards.forEach((card) => {
+      // Filtrar apenas cards na etapa "Ganho"
+      if (card.stepTitle !== 'Ganho') return
+      
       // Usar responsibleUserId e responsibleUser.name
       if (!card.responsibleUserId) return
 
@@ -67,29 +70,35 @@ const SellerPerformance = ({ filters }: SellerPerformanceProps) => {
         }
       }
 
+      // Contar apenas cards na etapa "Ganho"
       metrics[sellerId].totalCards += 1
-
-      // Verificar se o card está em uma etapa final (Ganho, Venda realizada, etc.)
-      // ou se tem monetaryAmount (indicando que foi fechado)
-      const isClosed = card.stepPhase === 'FINAL' || (card.monetaryAmount && card.monetaryAmount > 0)
-      
-      if (isClosed) {
-        metrics[sellerId].closedCards += 1
-        metrics[sellerId].totalRevenue += card.monetaryAmount || 0
-      }
+      metrics[sellerId].closedCards += 1
+      metrics[sellerId].totalRevenue += card.monetaryAmount || 0
     })
 
     Object.values(metrics).forEach((metric) => {
-      metric.conversionRate = calculateConversionRate(
-        metric.closedCards,
-        metric.totalCards
-      )
+      // Como todos os cards são da etapa "Ganho", a taxa de conversão é 100%
+      metric.conversionRate = 100
     })
 
-    // Ordenar por quantidade de cards (ranking)
-    return Object.values(metrics).sort(
+    // Ordenar por quantidade de cards na etapa "Ganho" (ranking)
+    const sorted = Object.values(metrics).sort(
       (a, b) => b.totalCards - a.totalCards
     )
+    
+    // Log de debug
+    console.log('📊 Performance por Vendedor (Etapa Ganho):', {
+      totalVendedores: sorted.length,
+      cardsFiltrados: filteredCards.filter(c => c.stepTitle === 'Ganho').length,
+      ranking: sorted.slice(0, 5).map((m, i) => ({
+        posicao: i + 1,
+        nome: m.name,
+        cardsGanho: m.totalCards,
+        receita: m.totalRevenue,
+      })),
+    })
+    
+    return sorted
   }, [filteredCards])
 
 
@@ -144,9 +153,9 @@ const SellerPerformance = ({ filters }: SellerPerformanceProps) => {
 
   return (
     <div className="space-y-6">
-      {/* Ranking de Cards por Vendedor */}
+      {/* Ranking de Cards na Etapa Ganho por Vendedor */}
       <ChartCard 
-        title="Ranking de Cards por Vendedor"
+        title="Ranking de Cards Ganhos por Vendedor"
         icon={<Trophy className="h-4 w-4 text-[#c8fa00]" />}
       >
         <div className="space-y-3">
@@ -185,10 +194,10 @@ const SellerPerformance = ({ filters }: SellerPerformanceProps) => {
                     </div>
                   </div>
 
-                  {/* Quantidade de Cards */}
+                  {/* Quantidade de Cards na Etapa Ganho */}
                   <div className="flex items-center gap-2 flex-shrink-0">
                     <span className="text-2xl font-bold text-[#c8fa00]">{metric.totalCards}</span>
-                    <span className="text-sm text-gray-400">cards</span>
+                    <span className="text-sm text-gray-400">ganhos</span>
                   </div>
                 </div>
               </div>
@@ -208,9 +217,7 @@ const SellerPerformance = ({ filters }: SellerPerformanceProps) => {
               <tr className="border-b border-gray-700/50">
                 <th className="text-left p-4 font-semibold text-gray-300">Ranking</th>
                 <th className="text-left p-4 font-semibold text-gray-300">Vendedor</th>
-                <th className="text-right p-4 font-semibold text-gray-300">Total de Cards</th>
-                <th className="text-right p-4 font-semibold text-gray-300">Fechados</th>
-                <th className="text-right p-4 font-semibold text-gray-300">Taxa de Conversão</th>
+                <th className="text-right p-4 font-semibold text-gray-300">Cards Ganhos</th>
                 <th className="text-right p-4 font-semibold text-gray-300">Receita Total</th>
               </tr>
             </thead>
@@ -243,16 +250,6 @@ const SellerPerformance = ({ filters }: SellerPerformanceProps) => {
                     <td className="p-4 text-right">
                       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#c8fa00]/10 text-[#c8fa00] border border-[#c8fa00]/20">
                         {metric.totalCards}
-                      </span>
-                    </td>
-                    <td className="p-4 text-right">
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                        {metric.closedCards}
-                      </span>
-                    </td>
-                    <td className="p-4 text-right">
-                      <span className={`font-medium ${metric.conversionRate >= 50 ? 'text-emerald-400' : 'text-amber-400'}`}>
-                        {formatPercentage(metric.conversionRate)}
                       </span>
                     </td>
                     <td className="p-4 text-right font-semibold text-white">
