@@ -77,15 +77,22 @@ const LoginPage = () => {
           throw new Error('Por favor, informe um telefone válido com DDD')
         }
         await apiClient.login(phoneNumbers, undefined)
+        // Navegar para página de verificação com o telefone
+        navigate('/verify-code', { 
+          state: { phone: phoneNumbers } 
+        })
       } else {
         if (!email.trim()) {
           throw new Error('Por favor, informe seu email')
         }
         await apiClient.login(undefined, email.trim())
+        // Navegar para página de verificação com o email
+        navigate('/verify-code', { 
+          state: { email: email.trim() } 
+        })
       }
-      navigate('/')
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro ao fazer login')
+      setError(err instanceof Error ? err.message : 'Erro ao enviar código')
     } finally {
       setLoading(false)
     }
@@ -116,7 +123,7 @@ const LoginPage = () => {
               Bem-vindo ao Dashboard
             </h1>
             <p className="text-gray-400 text-sm">
-              Entre com seu telefone ou email para acessar
+              Entre com seu telefone ou email para receber o código de verificação
             </p>
           </div>
 
