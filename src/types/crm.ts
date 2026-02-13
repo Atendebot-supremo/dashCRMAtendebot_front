@@ -2,18 +2,29 @@
 
 export interface Panel {
   id: string
-  name: string
+  title: string
+  name?: string
   description: string
+  key?: string
+  scope?: 'USER' | 'COMPANY' | string
+  archived?: boolean
+  overdueCardCount?: number
   createdAt: string
   updatedAt: string
+  stepTitles?: string[]
   steps: PanelStep[]
 }
 
 export interface PanelStep {
   id: string
   title: string
-  phase: string
+  phase?: string
   position: number
+  isInitial?: boolean
+  isFinal?: boolean
+  cardCount?: number
+  overdueCardCount?: number
+  monetaryAmount?: number
 }
 
 export interface Card {

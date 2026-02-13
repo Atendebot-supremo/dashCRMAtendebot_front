@@ -106,19 +106,25 @@
 
 ### 📊 Referências e Progresso
 
-15. **[`RESUMO_COMPLETO.md`](RESUMO_COMPLETO.md)**
+15. **[`DASHBOARD_METRICS_AND_SELLERS.md`](DASHBOARD_METRICS_AND_SELLERS.md)** ⭐ NOVO
+    - Métricas do dashboard: mapeamento de etapas, funil, valores atribuídos
+    - Performance de vendedores e Top 3
+    - Cálculo de receita proporcional por vendedor
+    - Arquivos envolvidos e logs de debug
+
+16. **[`RESUMO_COMPLETO.md`](RESUMO_COMPLETO.md)**
     - Resumo de tudo que foi feito
     - Estatísticas do projeto
     - Arquitetura
     - Próximos passos
 
-16. **[`PROGRESS.md`](PROGRESS.md)** ⭐ NOVO
+17. **[`PROGRESS.md`](PROGRESS.md)** ⭐ NOVO
     - Histórico de desenvolvimento
     - Estado atual do projeto
     - Roadmap e próximos passos
     - Métricas do projeto
 
-17. **[`CHANGELOG.md`](CHANGELOG.md)**
+18. **[`CHANGELOG.md`](CHANGELOG.md)**
     - Todas as mudanças notáveis
     - Versões e releases
     - Tipos de mudanças
@@ -127,7 +133,7 @@
 
 ### 🤝 Contribuição
 
-18. **[`CONTRIBUTING.md`](../CONTRIBUTING.md)**
+19. **[`CONTRIBUTING.md`](../CONTRIBUTING.md)**
     - Como contribuir
     - Padrões de código
     - Processo de PR
@@ -157,20 +163,21 @@
 3. `API_DOCUMENTATION.md`
 4. `IMPLEMENTATION_CHECKLIST.md`
 
-### Quer Ver Progresso
-1. `PROGRESS.md`
-2. `CHANGELOG.md`
-3. `RESUMO_COMPLETO.md`
+### Quer Ver Progresso / Métricas do Dashboard
+1. `DASHBOARD_METRICS_AND_SELLERS.md`
+2. `PROGRESS.md`
+3. `CHANGELOG.md`
+4. `RESUMO_COMPLETO.md`
 
 ---
 
 ## 📊 Estatísticas
 
-- **Total de documentos:** 18
+- **Total de documentos:** 19
 - **Páginas totais:** ~600+
 - **Exemplos de código:** 200+
 - **Guias passo a passo:** 12+
 
 ---
 
-**Última atualização:** Janeiro 2025
+**Última atualização:** Fevereiro 2025

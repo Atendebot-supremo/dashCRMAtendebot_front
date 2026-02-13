@@ -8,6 +8,27 @@ import type {
   GetCardsParams,
 } from '@/types/crm'
 
+const getPanelPriorityScore = (panel: Panel): number => {
+  const stepsScore = (panel.steps?.length || 0) * 100
+  const companyScopeScore = panel.scope === 'COMPANY' ? 50 : 0
+  const overdueScore = panel.overdueCardCount || 0
+
+  return stepsScore + companyScopeScore + overdueScore
+}
+
+const getDefaultPanelId = (panels: Panel[]): string | undefined => {
+  if (!panels.length) return undefined
+
+  const sortedPanels = [...panels].sort((a, b) => {
+    const scoreDiff = getPanelPriorityScore(b) - getPanelPriorityScore(a)
+    if (scoreDiff !== 0) return scoreDiff
+
+    return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+  })
+
+  return sortedPanels[0]?.id
+}
+
 // Query keys
 export const queryKeys = {
   panels: ['crm', 'panels'] as const,
@@ -135,8 +156,8 @@ export const useAgent = (agentId: string, enabled = true) => {
 export const useDashboardData = (filters?: DashboardFilters) => {
   const panelsQuery = usePanels()
   
-  // Usa o panelId do filtro ou o primeiro painel disponível
-  const activePanelId = filters?.panelId || panelsQuery.data?.[0]?.id
+  // Usa o panelId do filtro ou seleciona automaticamente o painel mais relevante
+  const activePanelId = filters?.panelId || getDefaultPanelId(panelsQuery.data || [])
   
   const cardsQuery = useCards(
     activePanelId ? {

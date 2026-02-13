@@ -1,15 +1,18 @@
 import { useMemo } from 'react'
-import { Users, TableIcon, Trophy, Medal, Award } from 'lucide-react'
+import { Users, Trophy, Medal, Award, DollarSign } from 'lucide-react'
 import ChartCard from '@/components/dashboard/ChartCard'
-import { useCards } from '@/lib/api/queries'
+import { useAgents, useCards } from '@/lib/api/queries'
 import {
   filterCardsByPeriod,
   filterCardsByUser,
   filterCardsByChannel,
+  calculateSellerProportionalRevenue,
 } from '@/lib/utils/calculations'
-import { calculateConversionRate } from '@/lib/utils/calculations'
-import { formatCurrency, formatPercentage } from '@/lib/utils/format'
+import { isCardInFinalStage } from '@/lib/utils/stage-mapping'
+import { formatCurrency } from '@/lib/utils/format'
 import type { DashboardFilters, Card } from '@/types/crm'
+
+const TOP_SELLERS_LIMIT = 3
 
 interface SellerPerformanceProps {
   filters?: DashboardFilters
@@ -17,6 +20,10 @@ interface SellerPerformanceProps {
 
 const SellerPerformance = ({ filters }: SellerPerformanceProps) => {
   const { data: cards = [], isLoading, isError } = useCards(filters)
+  const { data: agents = [], isLoading: isAgentsLoading } = useAgents(
+    filters?.panelId || '',
+    Boolean(filters?.panelId)
+  )
 
   const filteredCards = useMemo(() => {
     let filtered: Card[] = cards
@@ -31,6 +38,10 @@ const SellerPerformance = ({ filters }: SellerPerformanceProps) => {
 
     if (filters?.channelId) {
       filtered = filterCardsByChannel(filtered, filters.channelId)
+    }
+
+    if (filters?.userId) {
+      filtered = filterCardsByUser(filtered, filters.userId)
     }
 
     return filtered
@@ -49,15 +60,29 @@ const SellerPerformance = ({ filters }: SellerPerformanceProps) => {
       }
     > = {}
 
+    // Pré-carrega vendedores vindos da rota de agentes
+    agents.forEach((agent) => {
+      if (!agent.userId) return
+
+      metrics[agent.userId] = {
+        id: agent.userId,
+        name: agent.name || `Vendedor ${agent.userId.slice(0, 8)}`,
+        totalCards: 0,
+        closedCards: 0,
+        totalRevenue: 0,
+        conversionRate: 0,
+      }
+    })
+
+    // Calcular receita proporcional de cada vendedor
+    const revenueMap = calculateSellerProportionalRevenue(filteredCards)
+
     filteredCards.forEach((card) => {
-      // Filtrar apenas cards na etapa "Ganho"
-      if (card.stepTitle !== 'Ganho') return
-      
-      // Usar responsibleUserId e responsibleUser.name
       if (!card.responsibleUserId) return
 
       const sellerId = card.responsibleUserId
-      const sellerName = card.responsibleUser?.name || `Vendedor ${sellerId.slice(0, 8)}`
+      const sellerName =
+        card.responsibleUser?.name || `Vendedor ${sellerId.slice(0, 8)}`
 
       if (!metrics[sellerId]) {
         metrics[sellerId] = {
@@ -70,39 +95,54 @@ const SellerPerformance = ({ filters }: SellerPerformanceProps) => {
         }
       }
 
-      // Contar apenas cards na etapa "Ganho"
+      // Cards totais do vendedor no período/filtros
       metrics[sellerId].totalCards += 1
-      metrics[sellerId].closedCards += 1
-      metrics[sellerId].totalRevenue += card.monetaryAmount || 0
+
+      // Ganhos somente em etapa final
+      if (isCardInFinalStage(card)) {
+        metrics[sellerId].closedCards += 1
+      }
+    })
+
+    // Atribuir receita calculada (proporcional ou direta)
+    Object.keys(metrics).forEach((sellerId) => {
+      metrics[sellerId].totalRevenue = revenueMap.get(sellerId) || 0
     })
 
     Object.values(metrics).forEach((metric) => {
-      // Como todos os cards são da etapa "Ganho", a taxa de conversão é 100%
-      metric.conversionRate = 100
+      metric.conversionRate =
+        metric.totalCards > 0
+          ? (metric.closedCards / metric.totalCards) * 100
+          : 0
     })
 
-    // Ordenar por quantidade de cards na etapa "Ganho" (ranking)
+    // Ordenar por receita → ganhos → total de cards
     const sorted = Object.values(metrics).sort(
-      (a, b) => b.totalCards - a.totalCards
+      (a, b) =>
+        b.totalRevenue - a.totalRevenue ||
+        b.closedCards - a.closedCards ||
+        b.totalCards - a.totalCards
     )
-    
+
     // Log de debug
-    console.log('📊 Performance por Vendedor (Etapa Ganho):', {
+    console.log('📊 Performance por Vendedor:', {
+      agentesCarregados: agents.length,
       totalVendedores: sorted.length,
-      cardsFiltrados: filteredCards.filter(c => c.stepTitle === 'Ganho').length,
-      ranking: sorted.slice(0, 5).map((m, i) => ({
+      cardsFiltrados: filteredCards.filter((c) => isCardInFinalStage(c)).length,
+      ranking: sorted.slice(0, TOP_SELLERS_LIMIT).map((m, i) => ({
         posicao: i + 1,
         nome: m.name,
-        cardsGanho: m.totalCards,
+        cardsTotais: m.totalCards,
+        cardsGanho: m.closedCards,
         receita: m.totalRevenue,
       })),
     })
-    
+
     return sorted
-  }, [filteredCards])
+  }, [agents, filteredCards])
 
 
-  if (isLoading) {
+  if (isLoading || isAgentsLoading) {
     return (
       <div className="space-y-4">
         <div className="h-[300px] animate-pulse rounded-xl bg-gray-800/50 border border-gray-700/50" />
@@ -151,115 +191,97 @@ const SellerPerformance = ({ filters }: SellerPerformanceProps) => {
     }
   }
 
+  const topSellers = sellerMetrics.slice(0, TOP_SELLERS_LIMIT)
+
   return (
     <div className="space-y-6">
-      {/* Ranking de Cards na Etapa Ganho por Vendedor */}
-      <ChartCard 
-        title="Ranking de Cards Ganhos por Vendedor"
+      {/* Top 3 Vendedores */}
+      <ChartCard
+        title={`Top ${TOP_SELLERS_LIMIT} Vendedores`}
         icon={<Trophy className="h-4 w-4 text-[#c8fa00]" />}
       >
-        <div className="space-y-3">
-          {sellerMetrics.slice(0, 10).map((metric, index) => {
+        <div className="space-y-4">
+          {topSellers.map((metric, index) => {
             const position = index + 1
             const ranking = getRankingIcon(position)
-            
+
             return (
               <div
                 key={metric.id}
-                className={`flex items-center justify-between p-4 rounded-xl border transition-all ${
+                className={`relative overflow-hidden rounded-xl border-2 p-5 transition-all ${
                   ranking
-                    ? `${ranking.bg} ${ranking.border} border-2`
+                    ? `${ranking.bg} ${ranking.border}`
                     : 'bg-gray-700/30 border-gray-600/30'
-                } hover:border-[#c8fa00]/30`}
+                } hover:border-[#c8fa00]/40`}
+                role="listitem"
+                aria-label={`${metric.name} - posição ${position}`}
+                tabIndex={0}
               >
-                <div className="flex items-center gap-4 flex-1 min-w-0">
-                  {/* Posição do Ranking */}
+                <div className="flex items-center gap-4">
+                  {/* Medalha */}
                   <div className="flex-shrink-0">
                     {ranking ? (
-                      <div className={`flex items-center justify-center w-10 h-10 rounded-full ${ranking.bg} ${ranking.border} border-2`}>
-                        <ranking.Icon className={`h-5 w-5 ${ranking.color}`} />
+                      <div
+                        className={`flex items-center justify-center w-12 h-12 rounded-full ${ranking.bg} ${ranking.border} border-2`}
+                      >
+                        <ranking.Icon className={`h-6 w-6 ${ranking.color}`} />
                       </div>
                     ) : (
-                      <div className="flex items-center justify-center w-10 h-10 rounded-full bg-gray-700/50 border border-gray-600/50">
-                        <span className="text-sm font-bold text-gray-400">#{position}</span>
+                      <div className="flex items-center justify-center w-12 h-12 rounded-full bg-gray-700/50 border border-gray-600/50">
+                        <span className="text-base font-bold text-gray-400">
+                          #{position}
+                        </span>
                       </div>
                     )}
                   </div>
 
-                  {/* Nome do Vendedor */}
+                  {/* Info do vendedor */}
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 mb-1">
                       <Users className="h-4 w-4 text-[#c8fa00] flex-shrink-0" />
-                      <span className="font-semibold text-white truncate">{metric.name}</span>
+                      <span className="font-semibold text-white truncate text-lg">
+                        {metric.name}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-4 text-sm text-gray-400">
+                      <span>{metric.totalCards} cards</span>
+                      <span className="text-[#c8fa00] font-medium">
+                        {metric.closedCards} ganhos
+                      </span>
+                      {metric.conversionRate > 0 && (
+                        <span>
+                          {metric.conversionRate.toFixed(1)}% conversão
+                        </span>
+                      )}
                     </div>
                   </div>
 
-                  {/* Quantidade de Cards na Etapa Ganho */}
-                  <div className="flex items-center gap-2 flex-shrink-0">
-                    <span className="text-2xl font-bold text-[#c8fa00]">{metric.totalCards}</span>
-                    <span className="text-sm text-gray-400">ganhos</span>
+                  {/* Receita em destaque */}
+                  <div className="flex flex-col items-end flex-shrink-0">
+                    <div className="flex items-center gap-1.5 mb-0.5">
+                      <DollarSign className="h-4 w-4 text-[#c8fa00]" />
+                      <span className="text-xs text-gray-400 uppercase tracking-wider font-medium">
+                        Receita
+                      </span>
+                    </div>
+                    <span className="text-xl font-bold text-white">
+                      {formatCurrency(metric.totalRevenue)}
+                    </span>
                   </div>
                 </div>
               </div>
             )
           })}
-        </div>
-      </ChartCard>
 
-      {/* Tabela Detalhada */}
-      <ChartCard 
-        title="Detalhes de Performance por Vendedor"
-        icon={<TableIcon className="h-4 w-4 text-[#c8fa00]" />}
-      >
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-gray-700/50">
-                <th className="text-left p-4 font-semibold text-gray-300">Ranking</th>
-                <th className="text-left p-4 font-semibold text-gray-300">Vendedor</th>
-                <th className="text-right p-4 font-semibold text-gray-300">Cards Ganhos</th>
-                <th className="text-right p-4 font-semibold text-gray-300">Receita Total</th>
-              </tr>
-            </thead>
-            <tbody>
-              {sellerMetrics.map((metric, index) => {
-                const position = index + 1
-                const ranking = getRankingIcon(position)
-                
-                return (
-                  <tr key={metric.id} className="border-b border-gray-700/30 hover:bg-gray-700/30 transition-colors">
-                    <td className="p-4">
-                      <div className="flex items-center justify-center">
-                        {ranking ? (
-                          <div className={`flex items-center justify-center w-8 h-8 rounded-full ${ranking.bg} ${ranking.border} border`}>
-                            <ranking.Icon className={`h-4 w-4 ${ranking.color}`} />
-                          </div>
-                        ) : (
-                          <span className="text-sm font-bold text-gray-500">#{position}</span>
-                        )}
-                      </div>
-                    </td>
-                    <td className="p-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#c8fa00]/20 to-[#c8fa00]/5 flex items-center justify-center">
-                          <Users className="h-4 w-4 text-[#c8fa00]" />
-                        </div>
-                        <span className="font-medium text-white">{metric.name}</span>
-                      </div>
-                    </td>
-                    <td className="p-4 text-right">
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#c8fa00]/10 text-[#c8fa00] border border-[#c8fa00]/20">
-                        {metric.totalCards}
-                      </span>
-                    </td>
-                    <td className="p-4 text-right font-semibold text-white">
-                      {formatCurrency(metric.totalRevenue)}
-                    </td>
-                  </tr>
-                )
-              })}
-            </tbody>
-          </table>
+          {topSellers.length === 0 && (
+            <div className="flex flex-col items-center gap-3 py-8">
+              <div className="h-12 w-12 rounded-full bg-gray-700/50 flex items-center justify-center">
+                <Users className="h-6 w-6 text-gray-500" />
+              </div>
+              <p className="text-gray-400">Nenhum vendedor encontrado</p>
+            </div>
+          )}
         </div>
       </ChartCard>
     </div>

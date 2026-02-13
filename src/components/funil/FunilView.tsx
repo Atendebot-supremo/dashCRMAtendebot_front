@@ -5,6 +5,7 @@ import ChartCard from '@/components/dashboard/ChartCard'
 import { useCards } from '@/lib/api/queries'
 import { calculateFunnelMetrics } from '@/lib/utils/calculations'
 import { filterCardsByPeriod, filterCardsByUser, filterCardsByChannel } from '@/lib/utils/calculations'
+import { getStageName } from '@/lib/utils/stage-mapping'
 import { formatCurrency, formatPercentage } from '@/lib/utils/format'
 import {
   Dialog,
@@ -58,7 +59,7 @@ const FunilView = ({ filters }: FunilViewProps) => {
   const cardsByStage = useMemo(() => {
     const grouped: Record<string, Card[]> = {}
     filteredCards.forEach((card) => {
-      const stageName = card.stepTitle || 'Sem Etapa'
+      const stageName = getStageName(card)
       if (!grouped[stageName]) {
         grouped[stageName] = []
       }

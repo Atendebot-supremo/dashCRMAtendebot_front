@@ -9,6 +9,7 @@ import {
   filterCardsByUser,
   filterCardsByChannel,
 } from '@/lib/utils/calculations'
+import { isCardInFinalStage } from '@/lib/utils/stage-mapping'
 import { formatCurrency } from '@/lib/utils/format'
 import type { DashboardFilters, Card } from '@/types/crm'
 
@@ -102,9 +103,7 @@ const RevenueMetrics = ({ filters }: RevenueMetricsProps) => {
         />
         <TremorMetricCard
           title="Vendas Fechadas"
-          value={filteredCards.filter(
-            (card) => card.status === 'closed' || card.status === 'concluido'
-          ).length}
+          value={filteredCards.filter((card) => isCardInFinalStage(card)).length}
           description="Total de vendas concluídas"
           icon={Users}
         />

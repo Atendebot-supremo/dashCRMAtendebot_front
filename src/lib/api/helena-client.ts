@@ -174,7 +174,7 @@ export const helenaClient = {
     console.log(`📋 [API] GET /api/crm/panels/${panelId}`)
     console.log('📋 [API] Buscando painel:', panelId)
     const result = await fetchWithAuth<Panel>(`/api/crm/panels/${panelId}`)
-    console.log('📋 [API] ✅ Painel recebido:', result.name)
+    console.log('📋 [API] ✅ Painel recebido:', result.title || result.name || panelId)
     console.log(`📋 [API] Total de etapas (steps): ${result.steps?.length || 0}`)
     console.log('📋 [API] Etapas (steps):', JSON.stringify(result.steps, null, 2))
     console.log('📋 [API] Dados completos do painel:', JSON.stringify(result, null, 2))
@@ -196,6 +196,8 @@ export const helenaClient = {
     console.log('🎴 [API] Parâmetros:', JSON.stringify(params, null, 2))
     
     const allCards: Card[] = []
+    const seenCardIds = new Set<string>()
+    let duplicateCount = 0
     let currentPage = 1
     let totalPages = 1
     const pageSize = 100 // Buscar 100 por vez para reduzir requisições
@@ -225,7 +227,15 @@ export const helenaClient = {
       
       // Adicionar cards da página atual
       if (result.items && result.items.length > 0) {
-        allCards.push(...result.items)
+        result.items.forEach((card) => {
+          if (seenCardIds.has(card.id)) {
+            duplicateCount += 1
+            return
+          }
+
+          seenCardIds.add(card.id)
+          allCards.push(card)
+        })
       }
       
       // Atualizar totalPages a partir da resposta da API
@@ -242,6 +252,36 @@ export const helenaClient = {
     } while (currentPage <= totalPages)
     
     console.log(`🎴 [API] ✅ TOTAL DE CARDS CARREGADOS: ${allCards.length}`)
+    if (duplicateCount > 0) {
+      console.warn(`🎴 [API] ⚠️ Cards duplicados ignorados: ${duplicateCount}`)
+    }
+
+    const cardsWithCustomFields = allCards.filter((card) => {
+      if (!card.customFields) return false
+      return Object.keys(card.customFields).length > 0
+    })
+    const cardsWithMonetaryAmount = allCards.filter((card) => {
+      return card.monetaryAmount !== null && card.monetaryAmount !== undefined
+    })
+    const customFieldKeysCount: Record<string, number> = {}
+    cardsWithCustomFields.forEach((card) => {
+      Object.keys(card.customFields || {}).forEach((key) => {
+        customFieldKeysCount[key] = (customFieldKeysCount[key] || 0) + 1
+      })
+    })
+
+    console.log('🎴 [API] Diagnóstico de campos monetários:', {
+      totalCards: allCards.length,
+      cardsWithCustomFields: cardsWithCustomFields.length,
+      cardsWithMonetaryAmount: cardsWithMonetaryAmount.length,
+      cardsWithNullCustomFields: allCards.length - cardsWithCustomFields.length,
+    })
+    console.log(
+      '🎴 [API] Top chaves customFields:',
+      Object.entries(customFieldKeysCount)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 15)
+    )
     
     // Agrupar cards por stepTitle para debug
     const cardsByStep: Record<string, number> = {}

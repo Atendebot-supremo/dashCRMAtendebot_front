@@ -5,6 +5,45 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/),
 e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
+## [1.4.0] - 2025-02-13
+
+### 📝 Documentação
+- **Novo:** `docs/DASHBOARD_METRICS_AND_SELLERS.md` — Documentação completa das métricas do dashboard: mapeamento de etapas, funil, valores atribuídos, performance de vendedores e cálculo de receita proporcional (Top 3)
+- `docs/INDEX.md` atualizado com referência ao novo documento
+- `README.md` — versão e última atualização atualizadas
+
+### ✨ Adicionado
+
+#### Receita proporcional por vendedor
+- Função `calculateSellerProportionalRevenue(cards)` em `src/lib/utils/calculations.ts`
+- **Prioridade 1:** Soma do "Valor atribuído" (customFields) por card quando disponível
+- **Prioridade 2 (fallback):** Distribuição proporcional do `monetaryAmount` das etapas do painel: `(cards_do_vendedor_na_etapa / cardCount_da_etapa) * monetaryAmount_da_etapa`
+- Permite exibir receita por vendedor mesmo quando a API não envia valores nos cards
+
+#### Top 3 Vendedores
+- Componente `SellerPerformance` passou a exibir apenas o **Top 3** vendedores (constante `TOP_SELLERS_LIMIT = 3`)
+- Ordenação por receita total → cards na etapa final → total de cards
+- Card de cada vendedor com: medalha, nome, total de cards, ganhos, taxa de conversão e receita em destaque
+- Removida tabela detalhada; foco no ranking visual do Top 3
+
+### 🔧 Melhorado
+
+#### Performance por vendedor
+- Lista de vendedores agora vem da rota de **agentes** (`useAgents`), garantindo que todos os vendedores do painel apareçam mesmo sem cards no período
+- Receita total por vendedor passa a usar `calculateSellerProportionalRevenue` em vez de somar apenas `getCardAssignedValue` dos cards em etapa final
+- Distinção clara entre cards totais e cards em etapa final (ganhos); conversão calculada como `closedCards / totalCards * 100`
+
+#### Valores monetários
+- `getCardAssignedValue(card)` já existente documentado e utilizado de forma consistente: prioridade para "Valor atribuído" / aliases em customFields, depois `monetaryAmount`, depois campo legado `value`
+- Integração com receita proporcional quando cards não trazem valor individual
+
+### 🐛 Corrigido (contexto de sessões anteriores)
+- Funil: mapeamento por nome da etapa e fallback para `panelStep.cardCount` quando contagem por cards for menor
+- Contagem de leads em etapas como "Ganho" e "Perdido" corrigida com deduplicação de cards e mapeamento dinâmico
+- Lista de vendedores completa (todos os agentes do painel) em vez de apenas quem tinha cards em etapa final
+
+---
+
 ## [1.3.0] - 2025-01-18
 
 ### 📝 Documentação
@@ -356,4 +395,4 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ---
 
-**Última atualização:** 18 de Janeiro de 2025
+**Última atualização:** 13 de Fevereiro de 2025

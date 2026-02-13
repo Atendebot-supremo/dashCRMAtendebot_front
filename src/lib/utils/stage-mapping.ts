@@ -4,13 +4,29 @@ import type { Card } from '@/types/crm'
 // Será atualizado quando buscarmos informações do painel
 let stepIdToNameMap: Record<string, string> = {}
 
-// Armazenar todas as etapas do painel (com posição)
-let allPanelSteps: Array<{ id: string; title: string; position: number }> = []
+// Armazenar todas as etapas do painel (com posição, contagem e valor agregado)
+let allPanelSteps: Array<{
+  id: string
+  title: string
+  position: number
+  isFinal?: boolean
+  cardCount?: number
+  monetaryAmount?: number
+}> = []
 
 /**
  * Atualiza o mapeamento de stepId para nome
  */
-export const updateStepMapping = (steps: Array<{ id: string; title: string; position?: number }>) => {
+export const updateStepMapping = (
+  steps: Array<{
+    id: string
+    title: string
+    position?: number
+    isFinal?: boolean
+    cardCount?: number
+    monetaryAmount?: number
+  }>
+) => {
   stepIdToNameMap = {}
   allPanelSteps = []
   
@@ -19,7 +35,10 @@ export const updateStepMapping = (steps: Array<{ id: string; title: string; posi
     allPanelSteps.push({
       id: step.id,
       title: step.title,
-      position: step.position ?? 0
+      position: step.position ?? 0,
+      isFinal: step.isFinal,
+      cardCount: step.cardCount,
+      monetaryAmount: step.monetaryAmount,
     })
   })
   
@@ -34,8 +53,20 @@ export const updateStepMapping = (steps: Array<{ id: string; title: string; posi
 /**
  * Retorna todas as etapas do painel ordenadas por posição
  */
-export const getAllPanelSteps = (): Array<{ id: string; title: string; position: number }> => {
-  return [...allPanelSteps]
+export const getAllPanelSteps = (): Array<{
+  id: string
+  title: string
+  position: number
+  cardCount?: number
+  monetaryAmount?: number
+}> => {
+  return allPanelSteps.map(({ id, title, position, cardCount, monetaryAmount }) => ({
+    id,
+    title,
+    position,
+    cardCount,
+    monetaryAmount,
+  }))
 }
 
 /**
@@ -63,6 +94,45 @@ export const getStageName = (card: Card): string => {
   
   // Usar mapeamento dinâmico
   return getStepName(card.stepId)
+}
+
+/**
+ * IDs das etapas finais do painel atual.
+ * Prioridade: etapas marcadas como finais -> última etapa por posição.
+ */
+export const getFinalStepIds = (): string[] => {
+  if (allPanelSteps.length === 0) return []
+
+  const explicitFinalSteps = allPanelSteps.filter((step) => step.isFinal)
+  if (explicitFinalSteps.length > 0) {
+    return explicitFinalSteps.map((step) => step.id)
+  }
+
+  const lastStep = [...allPanelSteps].sort((a, b) => a.position - b.position).at(-1)
+  return lastStep ? [lastStep.id] : []
+}
+
+/**
+ * Verifica se o card está em etapa final.
+ * Usa stepId/stepPhase com fallback por nome da etapa.
+ */
+export const isCardInFinalStage = (card: Card): boolean => {
+  const finalStepIds = getFinalStepIds()
+  if (finalStepIds.length > 0 && finalStepIds.includes(card.stepId)) {
+    return true
+  }
+
+  if (typeof card.stepPhase === 'string' && card.stepPhase.toUpperCase() === 'FINAL') {
+    return true
+  }
+
+  const stageName = getStageName(card).toLowerCase()
+  return (
+    stageName.includes('conclu') ||
+    stageName.includes('ganho') ||
+    stageName.includes('fechado') ||
+    stageName.includes('venda realizada')
+  )
 }
 
 /**

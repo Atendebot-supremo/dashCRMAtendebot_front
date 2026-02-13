@@ -7,6 +7,7 @@ import {
   filterCardsByUser,
   filterCardsByChannel,
   calculateConversionRate,
+  getCardAssignedValue,
 } from '@/lib/utils/calculations'
 import { calculateDaysBetween } from '@/lib/utils/date'
 import { formatCurrency, formatPercentage, formatDays } from '@/lib/utils/format'
@@ -81,33 +82,14 @@ const ProductAnalysis = ({ filters }: ProductAnalysisProps) => {
 
       metrics[product].totalCards += 1
 
-      // Considerar cards fechados: stepPhase === 'FINAL' ou com monetaryAmount > 0
-      const isClosed = card.stepPhase === 'FINAL' || (card.monetaryAmount && card.monetaryAmount > 0)
+      // Considerar card fechado quando já tem valor atribuído
+      const assignedValue = getCardAssignedValue(card)
+      const isClosed = card.stepPhase === 'FINAL' || assignedValue > 0
       
       if (isClosed) {
         metrics[product].closedCards += 1
         
-        // Usar customFields['faturamento'] se disponível, senão usar monetaryAmount
-        const faturamento = card.customFields?.['faturamento']
-        let revenue = 0
-        
-        if (faturamento) {
-          // Se faturamento é uma string, tentar converter para número
-          if (typeof faturamento === 'string') {
-            // Remover caracteres não numéricos (R$, espaços, pontos, vírgulas)
-            const cleaned = faturamento.replace(/[^\d,.-]/g, '').replace(',', '.')
-            revenue = parseFloat(cleaned) || 0
-          } else if (typeof faturamento === 'number') {
-            revenue = faturamento
-          }
-        }
-        
-        // Se não tiver faturamento, usar monetaryAmount
-        if (revenue === 0) {
-          revenue = card.monetaryAmount || 0
-        }
-        
-        metrics[product].totalRevenue += revenue
+        metrics[product].totalRevenue += assignedValue
 
         if (card.createdAt && card.updatedAt) {
           const days = calculateDaysBetween(card.createdAt, card.updatedAt)

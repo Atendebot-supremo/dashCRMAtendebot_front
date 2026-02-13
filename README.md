@@ -205,6 +205,7 @@ Toda a documentação está na pasta `docs/`:
 - **`docs/API_DOCUMENTATION.md`** - Documentação da API backend (futuro)
 - **`docs/MIGRATION_GUIDE.md`** - Guia de migração para backend próprio
 - **`docs/QUICK_REFERENCE.md`** - Referência rápida
+- **`docs/DASHBOARD_METRICS_AND_SELLERS.md`** - Métricas, funil, valores e Top 3 vendedores
 
 ## 🔐 Segurança
 
@@ -311,6 +312,6 @@ Este projeto é privado e proprietário.
 
 **Desenvolvido com ❤️ para AtendeBot**
 
-**Versão:** 1.1.0  
-**Última atualização:** Janeiro 2025
+**Versão:** 1.4.0  
+**Última atualização:** Fevereiro 2025
 

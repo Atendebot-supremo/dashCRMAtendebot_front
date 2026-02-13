@@ -9,7 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { useCards } from '@/lib/api/queries'
+import { useCards, usePanels } from '@/lib/api/queries'
 import { extractUniqueResponsibles, extractUniqueChannels } from '@/lib/utils/stage-mapping'
 import type { DashboardFilters } from '@/types/crm'
 
@@ -24,8 +24,11 @@ const FiltersBar = ({ filters, onFiltersChange }: FiltersBarProps) => {
   // Estado para controlar se usa período pré-definido ou data customizada
   const [dateMode, setDateMode] = useState<'preset' | 'custom'>('preset')
   
-  // Buscar cards para extrair responsáveis e canais únicos
-  const { data: allCards = [] } = useCards({})
+  const { data: panels = [], isLoading: isPanelsLoading } = usePanels()
+  const { data: allCards = [], isLoading: isCardsLoading } = useCards(
+    filters.panelId ? { panelId: filters.panelId } : undefined,
+    !!filters.panelId
+  )
   
   // Extrair responsáveis únicos dos cards
   const users = useMemo(() => {
@@ -42,8 +45,17 @@ const FiltersBar = ({ filters, onFiltersChange }: FiltersBarProps) => {
     return extracted
   }, [allCards])
   
-  const usersLoading = false
-  const channelsLoading = false
+  const usersLoading = isCardsLoading || !filters.panelId
+  const channelsLoading = isCardsLoading || !filters.panelId
+
+  const handlePanelChange = (value: string) => {
+    onFiltersChange({
+      ...filters,
+      panelId: value === 'all' ? undefined : value,
+      userId: undefined,
+      channelId: undefined,
+    })
+  }
 
   const handleUserChange = (value: string) => {
     onFiltersChange({ ...filters, userId: value === 'all' ? undefined : value })
@@ -205,6 +217,30 @@ const FiltersBar = ({ filters, onFiltersChange }: FiltersBarProps) => {
             </div>
           </div>
         )}
+
+        {/* Usuário/Vendedor */}
+        <div className="space-y-1.5">
+          <label className="text-xs font-medium text-gray-400">Painel</label>
+          <Select
+            value={filters.panelId || 'all'}
+            onValueChange={handlePanelChange}
+            disabled={isPanelsLoading}
+          >
+            <SelectTrigger className="w-full h-10 bg-gray-700/50 border-gray-600/50 text-white hover:bg-gray-700/70 focus:border-[#c8fa00] focus:ring-[#c8fa00]/20 transition-all">
+              <SelectValue placeholder="Selecione o painel" />
+            </SelectTrigger>
+            <SelectContent className="bg-gray-800 border-gray-700 text-white">
+              <SelectItem value="all" className="hover:bg-gray-700 focus:bg-gray-700 focus:text-white">
+                Selecionar automaticamente
+              </SelectItem>
+              {panels.map((panel) => (
+                <SelectItem key={panel.id} value={panel.id} className="hover:bg-gray-700 focus:bg-gray-700 focus:text-white">
+                  {panel.title || panel.name || panel.id}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
 
         {/* Usuário/Vendedor */}
         <div className="space-y-1.5">

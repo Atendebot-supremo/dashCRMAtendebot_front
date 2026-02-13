@@ -196,7 +196,7 @@ const LossAnalysis = ({ filters }: LossAnalysisProps) => {
               
               return (
                 <div
-                  key={lead.id}
+                  key={`${lead.id}-${index}`}
                   className={`flex items-center justify-between p-2.5 rounded-lg border transition-all ${
                     ranking
                       ? `${ranking.bg} ${ranking.border} border-2`

@@ -22,6 +22,172 @@ export interface ConversionMetrics {
   averageResponseTime: number
 }
 
+const normalizeCustomFieldKey = (value: string): string => {
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, '')
+}
+
+const parseMonetaryValue = (value: unknown): number | null => {
+  if (typeof value === 'number') {
+    return Number.isFinite(value) ? value : null
+  }
+
+  if (typeof value !== 'string') {
+    return null
+  }
+
+  const trimmed = value.trim()
+  if (!trimmed) return null
+
+  const normalized = trimmed
+    .replace(/[^\d,.-]/g, '')
+    .replace(/\./g, '')
+    .replace(',', '.')
+
+  const parsed = Number.parseFloat(normalized)
+  return Number.isFinite(parsed) ? parsed : null
+}
+
+/**
+ * Retorna o valor monetário do card com prioridade:
+ * 1) Campo customizado "Valor atribuído" (e aliases)
+ * 2) Campo customizado "faturamento"
+ * 3) monetaryAmount da API
+ * 4) value legado
+ */
+export const getCardAssignedValue = (card: Card): number => {
+  const customFields = card.customFields ?? {}
+  const customFieldsEntries = Object.entries(customFields)
+
+  const aliasNormalizedKeys = new Set([
+    'valoratribuido',
+    'valor',
+    'faturamento',
+    'valorvenda',
+    'valordavenda',
+  ])
+
+  for (const [key, rawValue] of customFieldsEntries) {
+    if (!aliasNormalizedKeys.has(normalizeCustomFieldKey(key))) {
+      continue
+    }
+
+    const parsed = parseMonetaryValue(rawValue)
+    if (parsed !== null) {
+      return parsed
+    }
+  }
+
+  if (card.monetaryAmount !== null && card.monetaryAmount !== undefined) {
+    return card.monetaryAmount
+  }
+
+  return (card as any).value || 0
+}
+
+const getPanelStepAggregatedRevenue = (): number => {
+  return getAllPanelSteps().reduce((sum, step) => sum + (step.monetaryAmount ?? 0), 0)
+}
+
+const getPanelFinalStepsAggregatedRevenue = (): number => {
+  const finalStepIds = new Set(getFinalStepIds())
+  if (finalStepIds.size === 0) return 0
+
+  return getAllPanelSteps().reduce((sum, step) => {
+    if (!finalStepIds.has(step.id)) return sum
+    return sum + (step.monetaryAmount ?? 0)
+  }, 0)
+}
+
+/**
+ * Calcula a receita proporcional de cada vendedor.
+ *
+ * Estratégia (por ordem de prioridade):
+ *  1) Somar o "Valor atribuído" que vem nos customFields de cada card
+ *     (via getCardAssignedValue). Se pelo menos 1 card do vendedor
+ *     tiver valor > 0, usa essa soma direta.
+ *  2) Se NENHUM card do vendedor tiver valor individual, distribui
+ *     proporcionalmente o monetaryAmount agregado que vem na etapa
+ *     do painel: (cards_do_vendedor_na_etapa / cardCount_da_etapa)
+ *     * monetaryAmount_da_etapa.
+ *
+ * Retorna um Map<sellerId, receita>.
+ */
+export const calculateSellerProportionalRevenue = (
+  cards: Card[]
+): Map<string, number> => {
+  const revenueMap = new Map<string, number>()
+
+  // ---------- Tentar via valores individuais dos cards ----------
+  const sellerDirectRevenue = new Map<string, number>()
+  cards.forEach((card) => {
+    if (!card.responsibleUserId) return
+    const value = getCardAssignedValue(card)
+    const current = sellerDirectRevenue.get(card.responsibleUserId) || 0
+    sellerDirectRevenue.set(card.responsibleUserId, current + value)
+  })
+
+  const anySellerHasDirectValue = Array.from(sellerDirectRevenue.values()).some(
+    (v) => v > 0
+  )
+
+  if (anySellerHasDirectValue) {
+    console.log(
+      '💰 [SellerRevenue] Usando valores diretos dos cards (customFields/monetaryAmount)'
+    )
+    return sellerDirectRevenue
+  }
+
+  // ---------- Fallback: distribuição proporcional por etapa ----------
+  console.log(
+    '💰 [SellerRevenue] Cards sem valores individuais → calculando proporcional via monetaryAmount das etapas'
+  )
+
+  const steps = getAllPanelSteps()
+
+  // Agrupar qtde de cards por (sellerId, stepId)
+  const sellerCardsByStep = new Map<string, Map<string, number>>()
+  cards.forEach((card) => {
+    if (!card.responsibleUserId) return
+
+    const sellerId = card.responsibleUserId
+    if (!sellerCardsByStep.has(sellerId)) {
+      sellerCardsByStep.set(sellerId, new Map())
+    }
+    const stepMap = sellerCardsByStep.get(sellerId)!
+    const stepId = card.stepId
+    stepMap.set(stepId, (stepMap.get(stepId) || 0) + 1)
+  })
+
+  // Para cada vendedor, calcular a fatia proporcional em cada etapa
+  sellerCardsByStep.forEach((stepMap, sellerId) => {
+    let total = 0
+
+    stepMap.forEach((sellerCount, stepId) => {
+      const step = steps.find((s) => s.id === stepId)
+      if (!step) return
+
+      const stepCardCount = step.cardCount ?? 0
+      const stepMonetary = step.monetaryAmount ?? 0
+      if (stepCardCount <= 0 || stepMonetary <= 0) return
+
+      total += (sellerCount / stepCardCount) * stepMonetary
+    })
+
+    revenueMap.set(sellerId, total)
+  })
+
+  console.log(
+    '💰 [SellerRevenue] Receita proporcional calculada:',
+    Object.fromEntries(revenueMap)
+  )
+
+  return revenueMap
+}
+
 export const calculateConversionRate = (
   converted: number,
   total: number
@@ -62,7 +228,7 @@ export const calculateResponseTime = (cards: Card[]): number => {
   return sum / responseTimes.length
 }
 
-import { getStepName, getAllPanelSteps } from './stage-mapping'
+import { getStepName, getAllPanelSteps, getFinalStepIds, isCardInFinalStage } from './stage-mapping'
 
 export const calculateFunnelMetrics = (cards: Card[]): FunnelMetrics[] => {
   console.log('📊 [FunnelMetrics] Calculando métricas do funil...')
@@ -81,59 +247,91 @@ export const calculateFunnelMetrics = (cards: Card[]): FunnelMetrics[] => {
     stepTitle: c.stepTitle
   })))
   
-  // Mapear cards por stepId (mais confiável que stepTitle)
-  const stageMap = new Map<string, { cards: Card[]; totalValue: number; stepId: string; stepTitle: string }>()
+  const normalizeStageName = (value: string): string => {
+    return value
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .trim()
+      .toLowerCase()
+  }
 
-  cards.forEach((card) => {
-    // Usar stepId do card para mapear (mais confiável)
-    const cardStepId = card.stepId
-    if (!cardStepId) {
-      console.warn('⚠️ [FunnelMetrics] Card sem stepId:', card.id)
-      return
-    }
-    
-    // Buscar o título da etapa usando o stepId
-    const stepTitle = card.stepTitle || getStepName(cardStepId) || 'Sem etapa'
-    
-    const current = stageMap.get(cardStepId) || { 
-      cards: [], 
-      totalValue: 0, 
-      stepId: cardStepId,
-      stepTitle: stepTitle
-    }
-    current.cards.push(card)
-    // Usar monetaryAmount se disponível, senão usar value
-    current.totalValue += card.monetaryAmount || card.value || 0
-    stageMap.set(cardStepId, current)
+  // Índice de etapas do painel por nome normalizado
+  const panelStageByNormalizedTitle = new Map<string, string>()
+  allSteps.forEach((step) => {
+    panelStageByNormalizedTitle.set(normalizeStageName(step.title), step.title)
   })
 
-  console.log('📊 [FunnelMetrics] Etapas com cards (por stepId):', Array.from(stageMap.entries()).map(([id, data]) => ({
-    stepId: id,
-    stepTitle: data.stepTitle,
+  // Mapear cards por NOME da etapa (regra solicitada)
+  const stageMap = new Map<string, { cards: Card[]; totalValue: number; stageTitle: string }>()
+
+  cards.forEach((card) => {
+    // Prioriza mapeamento por nome vindo do card (normalizado)
+    const rawCardStageName = card.stepTitle || getStepName(card.stepId) || 'Sem etapa'
+    const normalizedCardStageName = normalizeStageName(rawCardStageName)
+    const stageTitle = panelStageByNormalizedTitle.get(normalizedCardStageName) || rawCardStageName
+
+    const current = stageMap.get(stageTitle) || {
+      cards: [], 
+      totalValue: 0, 
+      stageTitle
+    }
+    current.cards.push(card)
+    current.totalValue += getCardAssignedValue(card)
+    stageMap.set(stageTitle, current)
+  })
+
+  console.log('📊 [FunnelMetrics] Etapas com cards (por nome):', Array.from(stageMap.entries()).map(([title, data]) => ({
+    stageTitle: title,
     cardsCount: data.cards.length
   })))
 
   // Criar métricas para TODAS as etapas do painel, mesmo sem cards
   const metrics: FunnelMetrics[] = allSteps.map((step, index) => {
-    // Buscar cards pelo stepId (mais confiável)
-    const stageData = stageMap.get(step.id)
+    // Buscar cards pelo NOME da etapa
+    const stageData = stageMap.get(step.title)
+    const panelStepCardCount = step.cardCount ?? 0
+    const panelStepMonetaryAmount = step.monetaryAmount ?? 0
     
     // Se a etapa tem cards, usar os dados reais
     if (stageData) {
+      const leadsFromCards = stageData.cards.length
+      const leads = Math.max(leadsFromCards, panelStepCardCount)
+
+      if (panelStepCardCount > leadsFromCards) {
+        console.warn('⚠️ [FunnelMetrics] Divergência entre cards retornados e cardCount da etapa:', {
+          stage: step.title,
+          leadsFromCards,
+          panelStepCardCount,
+          usingLeads: leads,
+        })
+      }
+
+      const valueFromCards = stageData.totalValue
+      const value = Math.max(valueFromCards, panelStepMonetaryAmount)
+
+      if (panelStepMonetaryAmount > valueFromCards) {
+        console.warn('⚠️ [FunnelMetrics] Divergência de valor entre cards e etapa:', {
+          stage: step.title,
+          valueFromCards,
+          panelStepMonetaryAmount,
+          usingValue: value,
+        })
+      }
+
       return {
-        stage: step.title,
-        leads: stageData.cards.length,
-        value: stageData.totalValue,
+        stage: stageData.stageTitle,
+        leads,
+        value,
         averageTime: calculateAverageTimeForStage(stageData.cards),
         conversionRate: 0, // Será calculado depois
       }
     }
     
-    // Se a etapa não tem cards, criar métricas zeradas
+    // Se a etapa não tem cards no payload, usar cardCount do painel como fallback
     return {
       stage: step.title,
-      leads: 0,
-      value: 0,
+      leads: panelStepCardCount,
+      value: panelStepMonetaryAmount,
       averageTime: 0,
       conversionRate: 0, // Será calculado depois
     }
@@ -143,8 +341,8 @@ export const calculateFunnelMetrics = (cards: Card[]): FunnelMetrics[] => {
   if (allSteps.length === 0) {
     console.log('⚠️ [FunnelMetrics] Nenhuma etapa do painel encontrada, usando etapas dos cards')
     const stages = Array.from(stageMap.entries())
-      .map(([stage, data]) => ({
-        stage,
+      .map(([stageTitle, data]) => ({
+        stage: stageTitle,
         leads: data.cards.length,
         value: data.totalValue,
         averageTime: calculateAverageTimeForStage(data.cards),
@@ -205,14 +403,14 @@ export const calculateRevenueMetrics = (
   cards: Card[],
   filters?: DashboardFilters
 ): RevenueMetrics => {
-  const closedCards = cards.filter(
-    (card) => card.status === 'closed' || card.status === 'concluido'
-  )
+  const closedCards = cards.filter((card) => isCardInFinalStage(card))
 
-  const totalRevenue = closedCards.reduce(
-    (sum, card) => sum + (card.value || 0),
+  const totalRevenueFromCards = closedCards.reduce(
+    (sum, card) => sum + getCardAssignedValue(card),
     0
   )
+  const totalRevenueFromFinalSteps = getPanelFinalStepsAggregatedRevenue()
+  const totalRevenue = Math.max(totalRevenueFromCards, totalRevenueFromFinalSteps)
 
   const revenueBySeller: Record<string, number> = {}
   const revenueByChannel: Record<string, number> = {}
@@ -220,18 +418,33 @@ export const calculateRevenueMetrics = (
   closedCards.forEach((card) => {
     if (card.assignedTo) {
       revenueBySeller[card.assignedTo] =
-        (revenueBySeller[card.assignedTo] || 0) + (card.value || 0)
+        (revenueBySeller[card.assignedTo] || 0) + getCardAssignedValue(card)
     }
     // Buscar canal do campo customFields['origem-11']
     const origem = card.customFields?.['origem-11']
     if (origem && typeof origem === 'string' && origem.trim()) {
       const channelName = origem.trim()
       revenueByChannel[channelName] =
-        (revenueByChannel[channelName] || 0) + (card.value || 0)
+        (revenueByChannel[channelName] || 0) + getCardAssignedValue(card)
     }
   })
 
-  const averageTicket = calculateAverageTicket(totalRevenue, closedCards.length)
+  const closedCardsCountFallback = getAllPanelSteps().reduce((sum, step) => {
+    if (!(getFinalStepIds().includes(step.id))) return sum
+    return sum + (step.cardCount ?? 0)
+  }, 0)
+  const closedCount = Math.max(closedCards.length, closedCardsCountFallback)
+  const averageTicket = calculateAverageTicket(totalRevenue, closedCount)
+
+  if (totalRevenueFromFinalSteps > totalRevenueFromCards) {
+    console.warn('⚠️ [RevenueMetrics] Usando receita agregada das etapas finais', {
+      totalRevenueFromCards,
+      totalRevenueFromFinalSteps,
+      usingTotalRevenue: totalRevenue,
+      closedCardsFromPayload: closedCards.length,
+      closedCardsFromPanel: closedCardsCountFallback,
+    })
+  }
 
   return {
     totalRevenue,
@@ -245,9 +458,7 @@ export const calculateConversionMetrics = (
   cards: Card[]
 ): ConversionMetrics => {
   const totalLeads = cards.length
-  const convertedLeads = cards.filter(
-    (card) => card.status === 'closed' || card.status === 'concluido'
-  ).length
+  const convertedLeads = cards.filter((card) => isCardInFinalStage(card)).length
 
   const overallConversionRate = calculateConversionRate(
     convertedLeads,
@@ -278,7 +489,7 @@ export const calculateLostValue = (
   lostCards.forEach((card) => {
     const reason = card.lostReason || 'Sem motivo'
     const current = lostByReason.get(reason) || { value: 0, count: 0 }
-    current.value += card.value || 0
+    current.value += getCardAssignedValue(card)
     current.count += 1
     lostByReason.set(reason, current)
   })
@@ -351,11 +562,21 @@ export const aggregateByPeriod = (
     }
 
     aggregated[key].count += 1
-    aggregated[key].value += card.monetaryAmount || 0
+    aggregated[key].value += getCardAssignedValue(card)
   })
 
   console.log(`📊 [aggregateByPeriod] Resultado da agregação:`, JSON.stringify(aggregated, null, 2))
   console.log(`📊 [aggregateByPeriod] Total de períodos únicos: ${Object.keys(aggregated).length}`)
+
+  const totalValueFromCards = Object.values(aggregated).reduce((sum, current) => sum + current.value, 0)
+  const totalValueFromPanelSteps = getPanelStepAggregatedRevenue()
+  if (totalValueFromPanelSteps > totalValueFromCards) {
+    console.warn('⚠️ [aggregateByPeriod] Valor por card está abaixo do agregado das etapas', {
+      totalValueFromCards,
+      totalValueFromPanelSteps,
+      note: 'Cards sem customFields/monetaryAmount podem causar isso.',
+    })
+  }
 
   return aggregated
 }
